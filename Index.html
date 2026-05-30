@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HEAT</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060607;
+  --s1:#0d0d0f;
+  --s2:#141416;
+  --s3:#1c1c1f;
+  --s4:#242428;
+  --s5:#2e2e33;
+  --b1:rgba(255,255,255,0.05);
+  --b2:rgba(255,255,255,0.09);
+  --b3:rgba(255,255,255,0.14);
+  --t1:#ffffff;
+  --t2:#a8a8b0;
+  --t3:#55555e;
+  --t4:#333338;
+  --acc:#e8ff47;
+  --acc2:#c8e000;
+  --acc-dim:rgba(232,255,71,0.08);
+  --acc-glow:rgba(232,255,71,0.15);
+  --red:#ff4545;
+  --red-dim:rgba(255,69,69,0.1);
+  --pu:#9f7aea;
+  --pu-dim:rgba(159,122,234,0.1);
+  --am:#f6ad55;
+  --am-dim:rgba(246,173,85,0.1);
+}
+html{scroll-behavior:smooth;background:var(--bg);}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;overflow-x:hidden;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--s5);border-radius:2px;}
+
+/* GRID BG */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(var(--b1) 1px,transparent 1px),linear-gradient(90deg,var(--b1) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 0%,black 40%,transparent 100%);
+}
+body::after{
+  content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(232,255,71,0.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+.shell{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:0 20px 100px;}
+
+/* NAV */
+.nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 0 32px;
+  border-bottom:1px solid var(--b1);
+  margin-bottom:32px;
+}
+.nav-logo{display:flex;align-items:center;gap:14px;}
+.logo-box{
+  width:48px;height:48px;
+  background:var(--acc);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:24px;font-weight:900;
+  color:var(--bg);
+  clip-path:polygon(8% 0%,100% 0%,92% 100%,0% 100%);
+  flex-shrink:0;
+}
+.logo-text{line-height:1;}
+.logo-main{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:0.1em;color:var(--t1);text-transform:uppercase;}
+.logo-sub{font-size:11px;color:var(--t3);font-weight:400;letter-spacing:0.05em;margin-top:1px;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.streak-chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--s2);
+  border:1px solid var(--b2);
+  border-radius:6px;
+  padding:7px 14px;
+  font-size:13px;font-weight:600;
+  color:var(--am);
+  font-family:'Barlow Condensed',sans-serif;
+  letter-spacing:0.05em;
+}
+.streak-chip span{font-size:16px;}
+
+/* TODAY HERO */
+.today-hero{
+  position:relative;
+  background:var(--s1);
+  border:1px solid var(--b2);
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.hero-top-bar{
+  background:var(--acc);
+  padding:10px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.htb-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.15em;color:var(--bg);text-transform:uppercase;}
+.htb-day{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;color:var(--bg);}
+.hero-body{padding:24px;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:900;letter-spacing:-0.01em;line-height:1;color:var(--t1);text-transform:uppercase;margin-bottom:6px;}
+.hero-title span{color:var(--acc);}
+.hero-phase-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);margin-bottom:20px;}
+.hero-phase-tag::before{content:'';display:block;width:6px;height:6px;border-radius:50%;background:var(--acc);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.hg-cell{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;transition:border-color .2s;}
+.hg-cell:hover{border-color:var(--b3);}
+.hg-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);margin-bottom:5px;}
+.hg-val{font-size:13px;font-weight:600;color:var(--t1);line-height:1.4;}
+.hg-sub{font-size:11px;color:var(--t2);margin-top:2px;line-height:1.4;}
+.cheat-flag{display:inline-flex;align-items:center;gap:5px;background:var(--am-dim);border:1px solid rgba(246,173,85,0.25);color:var(--am);font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;letter-spacing:0.05em;margin-bottom:16px;}
+
+.hero-actions{display:flex;gap:10px;}
+.btn-mark{
+  flex:1;
+  background:var(--acc);
+  color:var(--bg);
+  border:none;
+  border-radius:10px;
+  padding:14px 20px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:16px;font-weight:800;
+  letter-spacing:0.08em;text-transform:uppercase;
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;overflow:hidden;
+}
+.btn-mark::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn-mark:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(232,255,71,0.25);}
+.btn-mark:hover::after{opacity:1;}
+.btn-mark:active{transform:translateY(0);}
+.btn-mark.is-done{background:var(--s3);color:var(--acc);border:1px solid rgba(232,255,71,0.2);box-shadow:none;}
+.btn-mark.is-done:hover{transform:none;box-shadow:none;}
+.btn-scroll{
+  background:var(--s2);color:var(--t2);
+  border:1px solid var(--b2);border-radius:10px;
+  padding:14px 18px;
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.btn-scroll:hover{color:var(--t1);border-color:var(--b3);}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.sc{
+  background:var(--s1);border:1px solid var(--b1);border-radius:12px;
+  padding:14px 16px;transition:border-color .2s,transform .2s;
+  cursor:default;
+}
+.sc:hover{border-color:var(--b2);transform:translateY(-2px);}
+.sc-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);margin-bottom:6px;}
+.sc-val{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;letter-spacing:-0.01em;line-height:1;color:var(--t1);transition:color .3s;}
+.sc-val.hi{color:var(--acc);}
+.sc-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:16px;}
+.prog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.prog-label{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3);}
+.prog-pct{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;color:var(--acc);}
+.prog-track{height:3px;background:var(--s3);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--acc2),var(--acc));border-radius:99px;transition:width .6s cubic-bezier(.22,1,.36,1);}
+
+/* CALENDAR */
+.cal-section{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:18px;margin-bottom:16px;}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-title{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--t3);}
+.cal-legend{display:flex;gap:12px;}
+.cal-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);}
+.leg-dot{width:8px;height:8px;border-radius:2px;}
+.cal-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;}
+.cdot{
+  aspect-ratio:1;border-radius:5px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;
+  transition:transform .15s,box-shadow .15s;
+  font-family:'Barlow Condensed',sans-serif;letter-spacing:0.02em;
+}
+.cdot:hover{transform:scale(1.15);}
+.cdot.done{background:var(--acc);color:var(--bg);}
+.cdot.done:hover{box-shadow:0 0 10px rgba(232,255,71,0.4);}
+.cdot.td{background:var(--acc-dim);border:1.5px solid var(--acc);color:var(--acc);}
+.cdot.cheat{background:var(--am-dim);border:1px solid rgba(246,173,85,0.3);color:var(--am);}
+.cdot.future{background:var(--s3);color:var(--t4);}
+
+/* MOTIVATION */
+.mot{
+  background:var(--s1);border:1px solid var(--b1);border-radius:14px;
+  padding:18px 20px;margin-bottom:16px;
+  display:flex;align-items:flex-start;gap:14px;
+  position:relative;overflow:hidden;
+}
+.mot::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--acc);
+}
+.mot-icon{font-size:24px;flex-shrink:0;}
+.mot-body{}
+.mot-tag{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);margin-bottom:4px;}
+.mot-text{font-size:13px;color:var(--t2);line-height:1.6;font-style:italic;}
+
+/* REMINDER */
+.rem-card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:18px 20px;margin-bottom:16px;}
+.rem-head{font-size:14px;font-weight:600;color:var(--t1);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.rem-sub{font-size:12px;color:var(--t3);margin-bottom:14px;}
+.rem-inputs{display:flex;gap:8px;flex-wrap:wrap;}
+.t-inp{background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-family:'Inter',sans-serif;font-size:13px;padding:9px 13px;outline:none;transition:border-color .2s;}
+.t-inp:focus{border-color:var(--acc);}
+.btn-r{background:var(--s2);border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:9px 16px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-r:hover{border-color:var(--acc);color:var(--acc);}
+.rem-status{font-size:11px;color:var(--acc);margin-top:8px;display:none;font-weight:500;}
+
+/* RULES */
+.rules{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.rule{font-size:11px;font-weight:500;padding:5px 11px;border-radius:6px;border:1px solid var(--b2);color:var(--t3);background:var(--s1);letter-spacing:0.02em;}
+
+/* CHEAT NOTE */
+.cheat-banner{
+  background:var(--am-dim);border:1px solid rgba(246,173,85,0.2);
+  border-radius:10px;padding:12px 16px;margin-bottom:20px;
+  font-size:12px;color:var(--am);line-height:1.6;
+}
+
+/* TABS */
+.tabs-wrap{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;}
+.tabs-wrap::-webkit-scrollbar{display:none;}
+.tab{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:9px 18px;border-radius:8px;
+  border:1px solid var(--b2);color:var(--t3);background:var(--s1);
+  cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;
+}
+.tab:hover{color:var(--t1);border-color:var(--b3);}
+.tab.on{background:var(--acc);color:var(--bg);border-color:transparent;}
+
+/* PHASE SECTION */
+.psec{display:none;}
+.psec.vis{display:block;}
+
+.pbanner{
+  border-radius:10px;padding:14px 18px;margin-bottom:14px;
+  border-left:3px solid;
+  background:var(--s1);border-top:1px solid var(--b1);border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);
+}
+.pb1{border-left-color:var(--acc);}
+.pb2{border-left-color:var(--pu);}
+.pb3{border-left-color:var(--am);}
+.pb4{border-left-color:var(--red);}
+.pb-num{font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px;}
+.pb1 .pb-num{color:var(--acc);}
+.pb2 .pb-num{color:var(--pu);}
+.pb3 .pb-num{color:var(--am);}
+.pb4 .pb-num{color:var(--red);}
+.pb-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:0.05em;text-transform:uppercase;color:var(--t1);margin-bottom:2px;}
+.pb-sub{font-size:12px;color:var(--t3);}
+
+/* DAY CARD */
+.dcard{
+  background:var(--s1);border:1px solid var(--b1);border-radius:12px;
+  margin-bottom:8px;overflow:hidden;
+  transition:border-color .2s,transform .2s,opacity .3s;
+  animation:cardIn .3s ease both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.dcard:hover{border-color:var(--b2);transform:translateY(-1px);}
+.dcard.is-today{border-color:rgba(232,255,71,0.35);}
+.dcard.is-done{opacity:0.35;}
+.dcard.is-done:hover{opacity:0.55;transform:none;}
+.dcard.is-cheat{border-color:rgba(246,173,85,0.3);}
+
+.dhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--b1);}
+.dnum{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.1em;color:var(--t3);min-width:46px;text-transform:uppercase;}
+.dname-wrap{flex:1;display:flex;align-items:center;gap:8px;}
+.dname{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:var(--t1);}
+.today-pip{width:7px;height:7px;border-radius:50%;background:var(--acc);flex-shrink:0;animation:blink 1.5s infinite;}
+.today-word{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--acc);}
+.dtag{font-size:9px;font-weight:700;padding:3px 9px;border-radius:4px;letter-spacing:0.08em;text-transform:uppercase;}
+.tca{background:rgba(31,200,120,0.1);color:#1fc878;}
+.tco{background:var(--pu-dim);color:var(--pu);}
+.tr{background:rgba(255,255,255,0.04);color:var(--t3);border:1px solid var(--b1);}
+.tf{background:var(--am-dim);color:var(--am);}
+.th{background:var(--red-dim);color:var(--red);}
+.tch{background:var(--am-dim);color:var(--am);}
+
+.chk{
+  width:24px;height:24px;border-radius:6px;
+  border:1.5px solid var(--t4);background:transparent;
+  cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;margin-left:auto;
+}
+.chk:hover{border-color:var(--acc);background:var(--acc-dim);}
+.chk.done{background:var(--acc);border-color:var(--acc);}
+.chk.done::after{content:'';width:11px;height:6px;border-left:2.5px solid var(--bg);border-bottom:2.5px solid var(--bg);transform:rotate(-45deg) translateY(-1px);display:block;}
+
+.dbody{display:grid;grid-template-columns:1fr 1fr;}
+.dcell{padding:12px 16px;}
+.dcell:first-child{border-right:1px solid var(--b1);}
+.dcl{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--t4);margin-bottom:4px;}
+.dcm{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px;line-height:1.4;}
+.dcs{font-size:11px;color:var(--t2);line-height:1.5;}
+.cheat-val{color:var(--am);font-weight:700;}
+
+.pnote{font-size:12px;color:var(--t3);background:var(--s2);border-radius:8px;padding:10px 14px;margin:6px 0 24px;line-height:1.7;border-left:2px solid var(--t4);}
+
+@media(max-width:560px){
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .hero-grid{grid-template-columns:1fr 1fr;}
+  .dbody{grid-template-columns:1fr;}
+  .dcell:first-child{border-right:none;border-bottom:1px solid var(--b1);}
+  .hero-title{font-size:38px;}
+  .cal-grid{grid-template-columns:repeat(8,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="logo-box">H</div>
+    <div class="logo-text">
+      <div class="logo-main">HEAT</div>
+      <div class="logo-sub">40 Day Home to Gym Plan</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="streak-chip"><span>🔥</span><span id="streak-n">0</span> DAY STREAK</div>
+  </div>
+</nav>
+
+<!-- TODAY HERO -->
+<div class="today-hero">
+  <div class="hero-top-bar">
+    <span class="htb-label">Today's Mission</span>
+    <span class="htb-day" id="htb-day">Day 0 of 40</span>
+  </div>
+  <div class="hero-body">
+    <div class="hero-phase-tag" id="hero-phase-tag">Not started</div>
+    <div class="hero-title" id="hero-title">START <span>DAY 1</span></div>
+    <div id="cheat-flag" style="display:none"><div class="cheat-flag">🍔 CHEAT MEAL TONIGHT — YOU EARNED IT</div></div>
+    <div class="hero-grid" id="hero-grid"></div>
+    <div class="hero-actions">
+      <button class="btn-mark" id="hero-btn" onclick="checkToday()">MARK TODAY DONE</button>
+      <button class="btn-scroll" onclick="scrollToToday()">Find in plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="sc"><div class="sc-label">Completed</div><div class="sc-val hi" id="sv-done">0</div><div class="sc-sub">of 40 days</div></div>
+  <div class="sc"><div class="sc-label">Remaining</div><div class="sc-val" id="sv-left">40</div><div class="sc-sub">days to go</div></div>
+  <div class="sc"><div class="sc-label">Streak</div><div class="sc-val" id="sv-streak">0</div><div class="sc-sub">days in a row</div></div>
+  <div class="sc"><div class="sc-label">Phase</div><div class="sc-val" id="sv-phase">0</div><div class="sc-sub" id="sv-phase-sub">not started</div></div>
+</div>
+
+<!-- PROGRESS -->
+<div class="prog-wrap">
+  <div class="prog-head"><span class="prog-label">Overall Progress</span><span class="prog-pct" id="prog-pct">0%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<!-- CALENDAR -->
+<div class="cal-section">
+  <div class="cal-header">
+    <div class="cal-title">40 Day Overview</div>
+    <div class="cal-legend">
+      <div class="cal-leg-item"><div class="leg-dot" style="background:var(--acc)"></div>Done</div>
+      <div class="cal-leg-item"><div class="leg-dot" style="background:var(--am);opacity:.7"></div>Cheat</div>
+      <div class="cal-leg-item"><div class="leg-dot" style="background:var(--s4)"></div>Ahead</div>
+    </div>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+</div>
+
+<!-- MOTIVATION -->
+<div class="mot">
+  <div class="mot-icon" id="mot-ico">💪</div>
+  <div class="mot-body">
+    <div class="mot-tag">Daily Fuel</div>
+    <div class="mot-text" id="mot-txt">Every champion started exactly where you are now. Day 1 begins everything.</div>
+  </div>
+</div>
+
+<!-- REMINDER -->
+<div class="rem-card">
+  <div class="rem-head">⏰ Daily Reminder</div>
+  <div class="rem-sub">Set a time and your browser will remind you to work out every day.</div>
+  <div class="rem-inputs">
+    <input type="time" class="t-inp" id="rem-t" value="08:00">
+    <button class="btn-r" onclick="setRem()">Set Reminder</button>
+    <button class="btn-r" onclick="clearRem()" style="color:var(--t3)">Clear</button>
+  </div>
+  <div class="rem-status" id="rem-ok"></div>
+</div>
+
+<!-- RULES -->
+<div class="rules">
+  <div class="rule">No cold drinks ever</div>
+  <div class="rule">Max 1 roti at dinner</div>
+  <div class="rule">Water all day</div>
+  <div class="rule">Never skip 2 days in a row</div>
+  <div class="rule">Cheat meal on Saturday only</div>
+  <div class="rule">Sleep before 2am</div>
+</div>
+
+<!-- CHEAT BANNER -->
+<div class="cheat-banner">🍔 &nbsp;Cheat meal rule: Every Saturday dinner rotates between Burger, Biryani, and Steak. No cold drinks even on cheat day. Eat extra clean the day after to balance it out.</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <div class="tab on" onclick="showPhase(0)">Phase 1</div>
+  <div class="tab" onclick="showPhase(1)">Phase 2</div>
+  <div class="tab" onclick="showPhase(2)">Phase 3</div>
+  <div class="tab" onclick="showPhase(3)">Phase 4</div>
+</div>
+
+<div id="p0" class="psec vis">
+  <div class="pbanner pb1"><div class="pb-num">Phase 01, Days 1 to 10</div><div class="pb-title">Wake the body up</div><div class="pb-sub">Short easy sessions, 10 to 15 min. Build the habit, not the burn.</div></div>
+  <div id="dp0"></div>
+  <div class="pnote">If anything feels too hard, cut reps in half. The goal this phase is just showing up every single day without fail.</div>
+</div>
+<div id="p1" class="psec">
+  <div class="pbanner pb2"><div class="pb-num">Phase 02, Days 11 to 20</div><div class="pb-title">Build the base</div><div class="pb-sub">Sessions grow to 20 min. Reps increase. Feel challenged but not destroyed.</div></div>
+  <div id="dp1"></div>
+  <div class="pnote">By day 20 your stamina will be noticeably better. That is real progress even if the mirror has not changed yet.</div>
+</div>
+<div id="p2" class="psec">
+  <div class="pbanner pb3"><div class="pb-num">Phase 03, Days 21 to 30</div><div class="pb-title">Push harder</div><div class="pb-sub">25 to 30 min sessions. HIIT introduced. This is where belly fat starts moving.</div></div>
+  <div id="dp2"></div>
+  <div class="pnote">Do not skip rest days this phase. Recovery is when your body actually burns fat and rebuilds muscle.</div>
+</div>
+<div id="p3" class="psec">
+  <div class="pbanner pb4"><div class="pb-num">Phase 04, Days 31 to 40</div><div class="pb-title">Gym ready</div><div class="pb-sub">30 to 40 min sessions. Full circuits. You walk into the gym already in shape.</div></div>
+  <div id="dp3"></div>
+  <div class="pnote">By day 40 your endurance, core strength, and eating habits are transformed. The gym will feel natural, not intimidating.</div>
+</div>
+
+</div>
+<script>
+const D=[
+  {d:1,n:'Monday',   tg:'tca',tl:'Light Cardio', w:'15 min walk + high knees',        wd:'3 sets of 20 high knees after the walk. Keep it comfortable.',      mid:'BBQ Salad, United King',         din:'Seekh kebab 3 pcs + raita',          cheat:false},
+  {d:2,n:'Tuesday',  tg:'tco',tl:'Core',         w:'10 min core circuit',             wd:'20 crunches, 20 sec plank, 15 leg raises x2 rounds.',               mid:'Chicken Tikka Salad, United King', din:'Chicken tikka 4 pcs + 1 roti',       cheat:false},
+  {d:3,n:'Wednesday',tg:'tr', tl:'Rest',          w:'Full rest today',                 wd:'Light 5 min stretch only if you feel like it.',                     mid:'Fruit chaat, ZBK FoodPanda',      din:'Daal + 2 rotis, Hasnain Pakwan',      cheat:false},
+  {d:4,n:'Thursday', tg:'tca',tl:'Light Cardio', w:'15 min walk + jumping jacks',     wd:'3 sets of 20 jumping jacks. Keep the pace comfortable.',            mid:'Fajita Salad, United King',        din:'Chicken boti + raita',                cheat:false},
+  {d:5,n:'Friday',   tg:'tco',tl:'Core',         w:'12 min core circuit',             wd:'20 bicycle crunches, 25 sec plank, 15 leg raises x2 rounds.',       mid:'Shahi Salad, United King',         din:'Shami kebab 3 pcs + 1 roti',         cheat:false},
+  {d:6,n:'Saturday', tg:'tch',tl:'Cheat Day',    w:'20 min beginner circuit',         wd:'10 squats, 8 push-ups (knees ok), 20 high knees, 20 sec plank x2.',  mid:'BBQ Salad, United King',          din:'CHEAT: Burger, Kaybees Gulshan',      cheat:true},
+  {d:7,n:'Sunday',   tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'Walk around the house only. Body rebuilds today.',                  mid:'Tikka Salad, United King',         din:'Tandoori chicken + salad',            cheat:false},
+  {d:8,n:'Monday',   tg:'tca',tl:'Light Cardio', w:'15 min walk + high knees',        wd:'3 sets of 25 high knees. Slight step up from day 1.',               mid:'BBQ Salad, United King',           din:'Seekh kebab + raita',                 cheat:false},
+  {d:9,n:'Tuesday',  tg:'tco',tl:'Core',         w:'12 min core circuit',             wd:'25 crunches, 25 sec plank, 20 leg raises x2 rounds.',               mid:'Fajita Salad, United King',        din:'Chicken tikka + 1 roti',              cheat:false},
+  {d:10,n:'Wednesday',tg:'tr',tl:'Rest',          w:'Full rest',                       wd:'Week 1 complete. Proud of yourself. Stretch and sleep well.',        mid:'Fruit chaat, ZBK FoodPanda',      din:'Daal + 2 rotis, Hasnain Pakwan',      cheat:false},
+  {d:11,n:'Thursday',tg:'tca',tl:'Cardio+',      w:'20 min walk + 4x20 high knees',   wd:'Add 4x20 jumping jacks after. More rounds now.',                    mid:'Shahi Salad, United King',         din:'Chicken boti + raita',                cheat:false},
+  {d:12,n:'Friday',  tg:'tco',tl:'Core+',        w:'15 min core circuit',             wd:'30 crunches, 30 sec plank, 20 leg raises, 20 bicycle crunches x2.', mid:'Tikka Salad, United King',         din:'Shami kebab + 1 roti',               cheat:false},
+  {d:13,n:'Saturday',tg:'tch',tl:'Cheat Day',    w:'25 min full body circuit',        wd:'15 squats, 10 push-ups, 30 high knees, 30 sec plank, 10 lunges x2.',  mid:'BBQ Salad, United King',         din:'CHEAT: Biryani, Al Habib FoodPanda',  cheat:true},
+  {d:14,n:'Sunday',  tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'Week 2 done. You are building something real.',                     mid:'Fajita Salad, United King',        din:'Tandoori chicken + salad',            cheat:false},
+  {d:15,n:'Monday',  tg:'tca',tl:'Cardio+',      w:'20 min brisk walk + HIIT intro',  wd:'3 rounds: 40 sec high knees, 20 sec rest, then 40 sec jumping jacks.', mid:'Shahi Salad, United King',      din:'Seekh kebab + raita',                 cheat:false},
+  {d:16,n:'Tuesday', tg:'tco',tl:'Core+',        w:'15 min core circuit',             wd:'30 crunches, 35 sec plank, 20 leg raises, 20 mountain climbers x2.',  mid:'Tikka Salad, United King',       din:'Chicken tikka + 1 roti',              cheat:false},
+  {d:17,n:'Wednesday',tg:'tr',tl:'Rest',          w:'Full rest',                       wd:'Light 5 min stretch only.',                                         mid:'Fruit chaat, ZBK FoodPanda',      din:'Daal + 2 rotis, Hasnain Pakwan',      cheat:false},
+  {d:18,n:'Thursday',tg:'tf', tl:'Full Body+',   w:'25 min full body circuit',        wd:'15 squats, 10 push-ups, 25 high knees, 35 sec plank, 12 lunges x3.', mid:'BBQ Salad, United King',          din:'Chicken boti + raita',                cheat:false},
+  {d:19,n:'Friday',  tg:'tco',tl:'Core+',        w:'18 min core circuit',             wd:'35 crunches, 35 sec plank, 25 leg raises, 20 bicycle crunches x3.', mid:'Shahi Salad, United King',         din:'Shami kebab + 1 roti',               cheat:false},
+  {d:20,n:'Saturday',tg:'tch',tl:'Cheat Day',    w:'Full rest',                       wd:'Halfway point. Rest fully. You have genuinely earned this.',         mid:'Fruit chaat, ZBK FoodPanda',      din:'CHEAT: Steak, grill place FoodPanda', cheat:true},
+  {d:21,n:'Sunday',  tg:'th', tl:'HIIT Intro',   w:'20 min HIIT circuit',             wd:'40 sec on, 20 sec off: high knees, jumping jacks, mountain climbers x4.', mid:'BBQ Salad, United King',   din:'Tandoori chicken + salad',            cheat:false},
+  {d:22,n:'Monday',  tg:'tco',tl:'Core++',       w:'20 min core circuit',             wd:'40 crunches, 40 sec plank, 25 leg raises, 25 mountain climbers x3.', mid:'Tikka Salad, United King',        din:'Seekh kebab + raita',                 cheat:false},
+  {d:23,n:'Tuesday', tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'Full rest. Non negotiable.',                                        mid:'Fajita Salad, United King',        din:'Chicken tikka + 1 roti',              cheat:false},
+  {d:24,n:'Wednesday',tg:'th',tl:'HIIT',          w:'25 min HIIT',                     wd:'40 sec on, 20 sec off: high knees, 5 burpees, jumping jacks, mountain climbers x5.', mid:'Fruit chaat, ZBK FoodPanda', din:'Daal + 2 rotis',    cheat:false},
+  {d:25,n:'Thursday',tg:'tf', tl:'Full Body++',  w:'28 min full body circuit',        wd:'20 squats, 12 push-ups, 30 high knees, 40 sec plank, 15 lunges x3.', mid:'Shahi Salad, United King',        din:'Chicken boti + raita',               cheat:false},
+  {d:26,n:'Friday',  tg:'tco',tl:'Core++',       w:'20 min core circuit',             wd:'40 crunches, 45 sec plank, 30 leg raises, 30 bicycle crunches x3.', mid:'BBQ Salad, United King',           din:'Shami kebab + 1 roti',               cheat:false},
+  {d:27,n:'Saturday',tg:'tch',tl:'Cheat Day',    w:'Full rest',                       wd:'Recovery day. Eat clean at lunch, enjoy dinner.',                   mid:'Tikka Salad, United King',         din:'CHEAT: Burger, Kaybees Gulshan',      cheat:true},
+  {d:28,n:'Sunday',  tg:'th', tl:'HIIT',          w:'25 min HIIT',                     wd:'40 sec on, 15 sec off: burpees, high knees, mountain climbers, jumping jacks x5.', mid:'Fajita Salad, United King', din:'Tandoori chicken + salad', cheat:false},
+  {d:29,n:'Monday',  tg:'tf', tl:'Full Body++',  w:'30 min full body circuit',        wd:'20 squats, 15 push-ups, 35 high knees, 45 sec plank, 15 lunges x3.', mid:'Shahi Salad, United King',        din:'Seekh kebab + raita',                cheat:false},
+  {d:30,n:'Tuesday', tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'Day 30. You have done something extraordinary. Celebrate with water.',mid:'BBQ Salad, United King',          din:'Chicken tikka + 1 roti',              cheat:false},
+  {d:31,n:'Wednesday',tg:'th',tl:'HIIT Hard',     w:'30 min HIIT',                     wd:'45 sec on, 15 sec off: burpees, high knees, mountain climbers, squat jumps x6.', mid:'Fruit chaat, ZBK FoodPanda', din:'Daal + 2 rotis',         cheat:false},
+  {d:32,n:'Thursday',tg:'tco',tl:'Core Max',     w:'22 min core max',                 wd:'50 crunches, 50 sec plank, 30 leg raises, 30 mountain climbers, 30 bicycle crunches x3.', mid:'Tikka Salad, United King', din:'Chicken boti + raita', cheat:false},
+  {d:33,n:'Friday',  tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'Full rest. Non negotiable.',                                        mid:'Shahi Salad, United King',         din:'Shami kebab + 1 roti',               cheat:false},
+  {d:34,n:'Saturday',tg:'tch',tl:'Cheat Day',    w:'35 min full circuit',             wd:'25 squats, 15 push-ups, 40 high knees, 50 sec plank, 20 lunges, 10 burpees x3.', mid:'BBQ Salad, United King', din:'CHEAT: Biryani, Al Habib FoodPanda',cheat:true},
+  {d:35,n:'Sunday',  tg:'th', tl:'HIIT Hard',    w:'30 min HIIT',                     wd:'45 sec on, 15 sec off: squat jumps, burpees, mountain climbers, high knees x6.', mid:'Fruit chaat, ZBK FoodPanda', din:'Tandoori chicken + salad', cheat:false},
+  {d:36,n:'Monday',  tg:'tco',tl:'Core Max',     w:'22 min core max',                 wd:'50 crunches, 55 sec plank, 35 leg raises, 35 mountain climbers x3.', mid:'Tikka Salad, United King',        din:'Seekh kebab + raita',                cheat:false},
+  {d:37,n:'Tuesday', tg:'tr', tl:'Rest',          w:'Full rest',                       wd:'3 days left. Rest well.',                                           mid:'Fajita Salad, United King',        din:'Chicken tikka + 1 roti',              cheat:false},
+  {d:38,n:'Wednesday',tg:'tf',tl:'Full Circuit',  w:'38 min full circuit',             wd:'25 squats, 20 push-ups, 40 high knees, 60 sec plank, 20 lunges, 12 burpees x3.', mid:'Shahi Salad, United King', din:'Daal + 2 rotis',           cheat:false},
+  {d:39,n:'Thursday',tg:'th', tl:'HIIT Hard',    w:'35 min HIIT',                     wd:'45 sec on, 15 sec off, full circuit x7. Last hard session. Push yourself.', mid:'BBQ Salad, United King',   din:'Chicken boti + raita',               cheat:false},
+  {d:40,n:'Friday',  tg:'tf', tl:'Gym Ready',    w:'Final session, Day 40',           wd:'25 squats, 20 push-ups, 60 sec plank, 15 burpees, 20 lunges. You are ready.', mid:'Tikka Salad, United King', din:'Shami kebab + 1 roti. You did it.', cheat:false},
+];
+const PH=[[0,9],[10,19],[20,29],[30,39]];
+const MOTIV=[
+  {i:'⚡',t:'Every champion started exactly where you are now. Day 1 begins everything.'},
+  {i:'🔥',t:'One week in. The hardest part was starting and you already did that.'},
+  {i:'💪',t:'Your body is adapting fast. You are stronger than you were 10 days ago.'},
+  {i:'🏆',t:'Halfway there. Most people quit before this point. You are not most people.'},
+  {i:'🚀',t:'Phase 3. This is where the fat actually moves. Push harder and trust it.'},
+  {i:'💯',t:'A few more days and you walk into that gym already in shape.'},
+  {i:'🎯',t:'40 days complete. You built a habit, a body, and a mindset. Now level up.'},
+];
+let start=localStorage.getItem('heatS3');
+const ck=JSON.parse(localStorage.getItem('heatC3')||'{}');
+let ri=null;
+
+function getTD(){if(!start)return 0;const s=new Date(start),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);return Math.floor((t-s)/86400000)+1;}
+function getStreak(){const td=getTD();let s=0;for(let i=td-1;i>=0;i--){if(ck[i])s++;else break;}return s;}
+
+function renderAll(){
+  const td=getTD();
+  renderHero(td);renderStats(td);renderCal(td);renderMotiv(td);renderCards(td);
+  document.getElementById('streak-n').textContent=getStreak();
+  if(td>0&&td<=40){const pi=PH.findIndex(([s,e])=>td-1>=s&&td-1<=e);if(pi>=0)showPhase(pi);}
+}
+
+function animateVal(id,val){
+  const el=document.getElementById(id);if(!el)return;
+  const cur=parseInt(el.textContent)||0;if(cur===val)return;
+  const step=(val-cur)/12;let v=cur;
+  const t=setInterval(()=>{v+=step;if((step>0&&v>=val)||(step<0&&v<=val)){el.textContent=val;clearInterval(t);}else{el.textContent=Math.round(v);}},30);
+}
+
+function renderHero(td){
+  const btn=document.getElementById('hero-btn');
+  const htb=document.getElementById('htb-day');
+  const htitle=document.getElementById('hero-title');
+  const hphase=document.getElementById('hero-phase-tag');
+  const hgrid=document.getElementById('hero-grid');
+  const cf=document.getElementById('cheat-flag');
+  if(td<1){htb.textContent='Day 0 of 40';htitle.innerHTML='START <span>DAY 1</span>';hphase.textContent='Not started';hgrid.innerHTML='';btn.style.display='none';cf.style.display='none';return;}
+  if(td>40){htb.textContent='Day 40 of 40';htitle.innerHTML='MISSION <span>COMPLETE</span>';hphase.textContent='All 40 days done';hgrid.innerHTML='';btn.style.display='none';cf.style.display='none';return;}
+  const day=D[td-1];const isDone=!!ck[td-1];
+  htb.textContent='Day '+td+' of 40';
+  htitle.innerHTML=day.n.toUpperCase()+' <span>'+day.tl.toUpperCase()+'</span>';
+  hphase.textContent='Phase '+(PH.findIndex(([s,e])=>td-1>=s&&td-1<=e)+1)+' of 4';
+  cf.style.display=day.cheat?'':'none';
+  btn.style.display='';
+  btn.className=isDone?'btn-mark is-done':'btn-mark';
+  btn.textContent=isDone?'TODAY COMPLETE':'MARK TODAY DONE';
+  hgrid.innerHTML=`
+    <div class="hg-cell"><div class="hg-label">Workout</div><div class="hg-val">${day.w}</div><div class="hg-sub">${day.wd.substring(0,60)}${day.wd.length>60?'...':''}</div></div>
+    <div class="hg-cell"><div class="hg-label">Midday Meal</div><div class="hg-val">${day.mid.split(',')[0]}</div><div class="hg-sub">${day.mid.split(',')[1]||''}</div></div>
+    <div class="hg-cell"><div class="hg-label">Dinner</div><div class="hg-val">${day.cheat?'<span class="cheat-val">'+day.din.replace('CHEAT: ','')+'</span>':day.din.split(',')[0]}</div><div class="hg-sub">${day.din.split(',')[1]||''}</div></div>
+    <div class="hg-cell"><div class="hg-label">Progress</div><div class="hg-val">${Math.round((Object.values(ck).filter(Boolean).length/40)*100)}% complete</div><div class="hg-sub">${Object.values(ck).filter(Boolean).length} of 40 days done</div></div>`;
+}
+
+function renderStats(td){
+  const done=Object.values(ck).filter(Boolean).length;
+  const pct=Math.round((done/40)*100);
+  animateVal('sv-done',done);
+  animateVal('sv-left',Math.max(0,40-done));
+  animateVal('sv-streak',getStreak());
+  const pi=td<1?0:PH.findIndex(([s,e])=>td-1>=s&&td-1<=e)+1;
+  animateVal('sv-phase',Math.max(0,Math.min(pi,4)));
+  document.getElementById('sv-phase-sub').textContent=td>40?'complete':'of 4 phases';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-pct').textContent=pct+'%';
+}
+
+function renderCal(td){
+  const g=document.getElementById('cal-grid');g.innerHTML='';
+  for(let i=0;i<40;i++){
+    const dot=document.createElement('div');dot.className='cdot';
+    const dn=i+1;
+    if(ck[i])dot.classList.add('done');
+    else if(dn===td)dot.classList.add('td');
+    else if(D[i].cheat)dot.classList.add('cheat');
+    else dot.classList.add('future');
+    dot.textContent=dn;
+    dot.title='Day '+dn+(D[i].cheat?' (Cheat day)':'')+(ck[i]?' - Done':'');
+    dot.onclick=()=>jumpToDay(i);
+    g.appendChild(dot);
+  }
+}
+
+function renderMotiv(td){
+  const idx=td<1?0:td<=7?1:td<=14?2:td<=20?3:td<=30?4:td<=39?5:6;
+  document.getElementById('mot-ico').textContent=MOTIV[idx].i;
+  document.getElementById('mot-txt').textContent=MOTIV[idx].t;
+}
+
+function renderCards(td){
+  PH.forEach(([start,end],pi)=>{
+    const c=document.getElementById('dp'+pi);c.innerHTML='';
+    for(let i=start;i<=end;i++){
+      const day=D[i];const isDone=!!ck[i];const isToday=day.d===td;
+      const card=document.createElement('div');
+      card.className='dcard'+(isToday?' is-today':'')+(isDone?' is-done':'')+(day.cheat?' is-cheat':'');
+      card.id='dc'+i;
+      card.style.animationDelay=(i-start)*0.04+'s';
+      card.innerHTML=`
+        <div class="dhead">
+          <span class="dnum">Day ${String(day.d).padStart(2,'0')}</span>
+          <div class="dname-wrap">
+            ${isToday?'<span class="today-pip"></span>':''}
+            <span class="dname">${day.n}</span>
+            ${isToday?'<span class="today-word">Today</span>':''}
+          </div>
+          <span class="dtag ${day.tg}">${day.tl}</span>
+          <div class="chk ${isDone?'done':''}" onclick="toggle(${i})"></div>
+        </div>
+        <div class="dbody">
+          <div class="dcell">
+            <div class="dcl">Workout</div>
+            <div class="dcm">${day.w}</div>
+            <div class="dcs">${day.wd}</div>
+          </div>
+          <div class="dcell">
+            <div class="dcl">${day.cheat?'Midday + Cheat Dinner':'Midday + Dinner'}</div>
+            <div class="dcm">${day.mid.split(',')[0]}</div>
+            <div class="dcs">${day.cheat?'<span class="cheat-val">'+day.din+'</span>':day.din}</div>
+          </div>
+        </div>`;
+      c.appendChild(card);
+    }
+  });
+}
+
+function toggle(i){
+  if(i===0&&!ck[0]&&!start){start=new Date().toISOString().split('T')[0];localStorage.setItem('heatS3',start);}
+  ck[i]=!ck[i];
+  localStorage.setItem('heatC3',JSON.stringify(ck));
+  renderAll();
+}
+
+function checkToday(){const td=getTD();if(td<1||td>40)return;toggle(td-1);}
+
+function scrollToToday(){
+  const td=getTD();if(td<1||td>40)return;
+  const pi=PH.findIndex(([s,e])=>td-1>=s&&td-1<=e);
+  if(pi>=0)showPhase(pi);
+  setTimeout(()=>{const el=document.getElementById('dc'+(td-1));if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},150);
+}
+
+function jumpToDay(i){
+  const pi=PH.findIndex(([s,e])=>i>=s&&i<=e);
+  if(pi>=0)showPhase(pi);
+  setTimeout(()=>{const el=document.getElementById('dc'+i);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},150);
+}
+
+function showPhase(idx){
+  document.querySelectorAll('.psec').forEach((s,i)=>s.classList.toggle('vis',i===idx));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',i===idx));
+}
+
+function setRem(){
+  const v=document.getElementById('rem-t').value;if(!v)return;
+  localStorage.setItem('heatR3',v);startRemLoop(v);
+  showRemStatus('Reminder set for '+v+' every day.');
+}
+function clearRem(){localStorage.removeItem('heatR3');if(ri)clearInterval(ri);showRemStatus('Reminder cleared.');}
+function showRemStatus(msg){const el=document.getElementById('rem-ok');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3000);}
+function startRemLoop(v){
+  if(ri)clearInterval(ri);
+  ri=setInterval(()=>{
+    const n=new Date();const t=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+    if(t===v){const td=getTD();if(td>0&&td<=40&&!ck[td-1]&&'Notification'in window&&Notification.permission==='granted')new Notification('HEAT',{body:'Day '+td+' is waiting. Get it done.'});}
+  },30000);
+}
+function initRem(){const s=localStorage.getItem('heatR3');if(s){document.getElementById('rem-t').value=s;if('Notification'in window)Notification.requestPermission().then(()=>startRemLoop(s));}}
+
+renderAll();initRem();
+</script>
+</body>
+</html>
