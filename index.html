@@ -645,7 +645,7 @@ function getBMI(bmi){
   return{cat:"Obese",desc:"Prioritize fat loss with a calorie deficit and daily movement."};
 }
 
-async async function init(){
+async function init(){
   drawBG();
   try{
     const{data:{session}}=await db.auth.getSession();
