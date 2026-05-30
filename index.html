@@ -670,8 +670,23 @@ async function init(){
 }
 
 async function loadProfile(){
+  console.log("Loading profile for user:", U.id);
   const{data,error}=await db.from("profiles").select("*").eq("id",U.id).single();
-  if(error||!data){showScreen("auth");return;}
+  console.log("Profile result:", {data, error});
+  if(error){
+    console.error("Profile error:", error.message, error.code);
+    // If profile doesn't exist yet, create it
+    if(error.code === "PGRST116"){
+      const{data:newP, error:insErr}=await db.from("profiles").insert({
+        id:U.id, email:U.email, status:"approved", is_admin:U.email==="haris28.hr@gmail.com"
+      }).select().single();
+      if(insErr){console.error("Insert error:",insErr);showScreen("auth");return;}
+      console.log("Created new profile:", newP);
+      return loadProfile();
+    }
+    showScreen("auth");return;
+  }
+  if(!data){showScreen("auth");return;}
   P=data;
   if(data.status==="pending"){
     showScreen("auth");
