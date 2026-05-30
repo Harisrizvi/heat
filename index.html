@@ -943,8 +943,17 @@ function renderProfPage(){
 }
 
 async function loadAdmin(){
-  const{data:users}=await db.from("profiles").select("*").order("created_at",{ascending:false});
-  if(!users)return;
+  console.log("Loading admin panel...");
+  const{data:users,error:uerr}=await db.from("profiles").select("*").order("created_at",{ascending:false});
+  console.log("Admin users result:", {users, error:uerr});
+  if(uerr){
+    document.getElementById("admstats").innerHTML='<div style="color:var(--re);font-size:13px;padding:10px">Error loading users: '+uerr.message+'</div>';
+    return;
+  }
+  if(!users||!users.length){
+    document.getElementById("admstats").innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px">No users found.</div>';
+    return;
+  }
   const pending=users.filter(u=>u.status==="pending");
   const approved=users.filter(u=>u.status==="approved").length;
   document.getElementById("admstats").innerHTML=`
