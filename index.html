@@ -571,7 +571,19 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 <script>
 const SB_URL="https://bknqxstswemcwxkgrpiv.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrbnF4c3Rzd2VtY3d4a2dycGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNTQyMDQsImV4cCI6MjA5NTczMDIwNH0.xa17xkXsLpjiE8rMs908-GDDah5scIWxs8mlUtRdGHU";
-const db=supabase.createClient(SB_URL,SB_KEY);
+const SB_PUB="sb_publishable_i1g_FCxjgCbHCsw9n9-aFg_lXfbjtUM";
+let db;
+try{
+  db=supabase.createClient(SB_URL,SB_KEY,{
+    auth:{
+      autoRefreshToken:true,
+      persistSession:true,
+      detectSessionInUrl:true
+    }
+  });
+}catch(e){
+  console.error("Supabase init error:",e);
+}
 
 let U=null,P=null,PROG={},HABITS=[],HLOGS={},GOAL="",ACT="",COL="#c8ff00",SD=null;
 
@@ -1013,9 +1025,20 @@ async function doLogin(){
   const err=document.getElementById("lerr");err.style.display="none";
   if(!email||!pass){err.textContent="Please fill in all fields";err.style.display="block";return;}
   const btn=event.currentTarget;btn.disabled=true;btn.textContent="Signing in...";
-  const{error}=await db.auth.signInWithPassword({email,password:pass});
-  btn.disabled=false;btn.textContent="Sign In";
-  if(error){err.textContent=error.message;err.style.display="block";}
+  try{
+    const{data,error}=await db.auth.signInWithPassword({email,password:pass});
+    console.log("Login result:",{data,error});
+    btn.disabled=false;btn.textContent="Sign In";
+    if(error){err.textContent=error.message;err.style.display="block";return;}
+    if(data&&data.user){
+      U=data.user;
+      await loadProf();
+    }
+  }catch(e){
+    console.error("Login exception:",e);
+    btn.disabled=false;btn.textContent="Sign In";
+    err.textContent="Connection error: "+e.message;err.style.display="block";
+  }
 }
 
 async function doSignup(){
