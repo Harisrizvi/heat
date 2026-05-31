@@ -221,6 +221,14 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .dc.done{opacity:.32;}
 .dc.missed{border-color:rgba(255,79,79,.2);}
 .dc.cheat{border-color:rgba(255,179,71,.2);}
+.dc.ph0{border-left:3px solid rgba(200,255,0,0.25);}
+.dc.ph1{border-left:3px solid rgba(183,148,244,0.25);}
+.dc.ph2{border-left:3px solid rgba(255,179,71,0.25);}
+.dc.ph3{border-left:3px solid rgba(255,79,79,0.25);}
+.dc.ph0.today{border-left:3px solid rgba(200,255,0,0.6);}
+.dc.ph1.today{border-left:3px solid rgba(183,148,244,0.6);}
+.dc.ph2.today{border-left:3px solid rgba(255,179,71,0.6);}
+.dc.ph3.today{border-left:3px solid rgba(255,79,79,0.6);}
 .dh{display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--b1);}
 .dnw{min-width:50px;}
 .dn{font-family:Oswald,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;}
@@ -800,7 +808,10 @@ function renderCards(td){
       const day=DAYS[i];const done=PROG[i]&&PROG[i].completed;
       const isToday=day.d===td;const miss=isMissed(i);const dd=getDayDate(i);
       const card=document.createElement("div");
-      card.className="dc reveal"+(isToday?" today":"")+(done?" done":"")+(miss?" missed":"")+(day.cheat&&!done?" cheat":"");
+      const phaseColors=["var(--acc3)","var(--pu2)","var(--am2)","var(--re2)"];
+      card.className="dc reveal ph"+pi+(isToday?" today":"")+(done?" done":"")+(miss?" missed":"")+(day.cheat&&!done?" cheat":"");
+      card.style.borderLeftColor=["rgba(200,255,0,0.3)","rgba(183,148,244,0.3)","rgba(255,179,71,0.3)","rgba(255,79,79,0.3)"][pi];
+      card.style.borderLeftWidth="3px";
       card.id="dc"+i;
       card.innerHTML=`<div class="dh">
         <div class="dnw"><div class="dn">Day ${String(day.d).padStart(2,"0")}</div><div class="dd">${dd?fmtShort(dd):""}</div></div>
@@ -945,13 +956,16 @@ function renderProfPage(){
 async function loadAdmin(){
   console.log("Loading admin panel...");
   const{data:users,error:uerr}=await db.from("profiles").select("*").order("created_at",{ascending:false});
-  console.log("Admin users result:", {users, error:uerr});
+  console.log("Admin users result:", JSON.stringify({count: users?.length, error:uerr?.message, firstUser: users?.[0]?.email}));
   if(uerr){
     document.getElementById("admstats").innerHTML='<div style="color:var(--re);font-size:13px;padding:10px">Error loading users: '+uerr.message+'</div>';
     return;
   }
-  if(!users||!users.length){
-    document.getElementById("admstats").innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px">No users found.</div>';
+  console.log("Users type:", typeof users, Array.isArray(users), users);
+  if(!users||!Array.isArray(users)||!users.length){
+    document.getElementById("admstats").innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px">No users found. Count: '+(users?users.length:"null")+'</div>';
+    document.getElementById("pendlist").innerHTML="";
+    document.getElementById("allusers").innerHTML="";
     return;
   }
   const pending=users.filter(u=>u.status==="pending");
