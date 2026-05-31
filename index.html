@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>RITUAL</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -20,7 +20,7 @@
   --r:14px;--rs:9px;--pill:999px;
 }
 html{scroll-behavior:smooth;background:var(--bg);}
-body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased;}
+body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none;}
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--s5);}
 .hidden{display:none!important;}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s;}
@@ -151,16 +151,18 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .nav-av{width:32px;height:32px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:14px;font-weight:700;color:var(--bg);cursor:pointer;}
 
 /* BOTTOM NAV */
-.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(7,7,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-around;padding:8px 0 14px;}
-.bni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 14px;border:none;background:transparent;}
+.bnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(7,7,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--b1);display:flex;align-items:center;justify-content:space-around;padding:8px 0 calc(14px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;}
+.bni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 14px;border:none;background:transparent;transition:transform .12s;-webkit-tap-highlight-color:transparent;}
+.bni:active{transform:scale(.88);}
 .bni-icon{font-size:20px;transition:transform .2s;}
 .bni-lbl{font-size:10px;font-weight:500;color:var(--t3);letter-spacing:.04em;transition:color .2s;}
 .bni.on .bni-lbl{color:var(--acc);}
 .bni.on .bni-icon{transform:scale(1.15);}
 
 /* PAGES */
-.page{display:none;max-width:800px;margin:0 auto;padding:22px 20px;}
-.page.active{display:block;}
+.page{display:none;width:100%;max-width:520px;margin:0 auto;padding:20px 18px calc(96px + env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh;}
+.page.active{display:block;animation:pageIn .32s cubic-bezier(.22,.61,.36,1);}
+@keyframes pageIn{from{opacity:0;transform:translateY(14px) scale(.99);}to{opacity:1;transform:translateY(0) scale(1);}}
 .pg-title{font-family:Oswald,sans-serif;font-size:24px;font-weight:700;letter-spacing:.04em;color:var(--t1);margin-bottom:3px;}
 .pg-sub{font-size:13px;color:var(--t3);margin-bottom:20px;}
 
@@ -1743,7 +1745,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.4";
+const APP_VERSION = "2026.05.31.5";
 
 async function checkForUpdate(){
   try{
