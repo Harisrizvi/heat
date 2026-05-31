@@ -197,6 +197,9 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .pt-sl{position:absolute;top:4px;bottom:4px;background:var(--acc);border-radius:9px;transition:left .3s cubic-bezier(.22,1,.36,1),width .3s;z-index:0;}
 .pt{flex:1;padding:11px 4px;font-family:Oswald,sans-serif;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);background:transparent;border:none;cursor:pointer;position:relative;z-index:1;text-align:center;transition:color .2s;}
 .pt.on{color:var(--bg);}
+.ptabs .pt:nth-child(2).on{background:var(--pu);}
+.ptabs .pt:nth-child(3).on{background:var(--am);}
+.ptabs .pt:nth-child(4).on{background:var(--re);}
 .psec{display:none;}
 .psec.vis{display:block;}
 .pbanner{background:var(--s2);border-radius:var(--rs);padding:13px 16px;margin-bottom:10px;position:relative;overflow:hidden;}
@@ -221,17 +224,43 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .dc.done{opacity:.32;}
 .dc.missed{border-color:rgba(255,79,79,.2);}
 .dc.cheat{border-color:rgba(255,179,71,.2);}
-.dc.ph0{border-left:3px solid rgba(200,255,0,0.25);}
-.dc.ph1{border-left:3px solid rgba(183,148,244,0.25);}
-.dc.ph2{border-left:3px solid rgba(255,179,71,0.25);}
-.dc.ph3{border-left:3px solid rgba(255,79,79,0.25);}
-.dc.ph0.today{border-left:3px solid rgba(200,255,0,0.6);}
-.dc.ph1.today{border-left:3px solid rgba(183,148,244,0.6);}
-.dc.ph2.today{border-left:3px solid rgba(255,179,71,0.6);}
-.dc.ph3.today{border-left:3px solid rgba(255,79,79,0.6);}
+/* PHASE CARD COLORS */
+.dc.ph0{border-left:3px solid rgba(200,255,0,0.3);background:linear-gradient(to right,rgba(200,255,0,0.03),var(--s1));}
+.dc.ph1{border-left:3px solid rgba(183,148,244,0.3);background:linear-gradient(to right,rgba(183,148,244,0.04),var(--s1));}
+.dc.ph2{border-left:3px solid rgba(255,179,71,0.3);background:linear-gradient(to right,rgba(255,179,71,0.04),var(--s1));}
+.dc.ph3{border-left:3px solid rgba(255,79,79,0.3);background:linear-gradient(to right,rgba(255,79,79,0.04),var(--s1));}
+.dc.ph0.today{border-left:3px solid rgba(200,255,0,0.7);box-shadow:0 0 0 1px rgba(200,255,0,0.08),0 4px 16px rgba(0,0,0,0.3);}
+.dc.ph1.today{border-left:3px solid rgba(183,148,244,0.7);box-shadow:0 0 0 1px rgba(183,148,244,0.08);}
+.dc.ph2.today{border-left:3px solid rgba(255,179,71,0.7);box-shadow:0 0 0 1px rgba(255,179,71,0.08);}
+.dc.ph3.today{border-left:3px solid rgba(255,79,79,0.7);box-shadow:0 0 0 1px rgba(255,79,79,0.08);}
+/* REVEAL ANIMATIONS */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-left{opacity:0;transform:translateX(-16px);transition:opacity .4s ease,transform .4s ease;}
+.reveal-left.visible{opacity:1;transform:translateX(0);}
+/* CARD ENTRANCE */
+@keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.dc{animation:cardIn .35s ease both;}
+/* MOBILE IMPROVEMENTS */
+@media(max-width:580px){
+  .dc .dh{flex-wrap:wrap;gap:6px;}
+  .dc .dtag{font-size:8px;padding:2px 6px;}
+  .thero-day{font-size:30px;}
+  .thero-grid{grid-template-columns:1fr 1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .bnav{padding:6px 0 12px;}
+  .bni-icon{font-size:18px;}
+  .bni-lbl{font-size:9px;}
+  .pg-title{font-size:20px;}
+  .auc-info{grid-template-columns:1fr 1fr;}
+}
 .dh{display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--b1);}
 .dnw{min-width:50px;}
 .dn{font-family:Oswald,sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;}
+.ph0 .dn{color:rgba(200,255,0,0.6);}
+.ph1 .dn{color:rgba(183,148,244,0.6);}
+.ph2 .dn{color:rgba(255,179,71,0.6);}
+.ph3 .dn{color:rgba(255,79,79,0.6);}
 .dd{font-size:10px;color:var(--t4);margin-top:1px;}
 .dna{flex:1;display:flex;align-items:center;gap:6px;}
 .dname{font-family:Oswald,sans-serif;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t1);}
@@ -336,6 +365,39 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   .cal-grid{grid-template-columns:repeat(8,1fr);}
   .info-grid{grid-template-columns:1fr 1fr;}
   .adm-stats{grid-template-columns:repeat(2,1fr);}
+}
+
+/* PHASE NUMBER COLORS */
+.ph0 .dn{color:rgba(200,255,0,0.7);}
+.ph1 .dn{color:rgba(183,148,244,0.7);}
+.ph2 .dn{color:rgba(255,179,71,0.7);}
+.ph3 .dn{color:rgba(255,79,79,0.7);}
+/* PHASE TAB ACTIVE COLORS */
+.pt-sl{transition:left .3s cubic-bezier(.22,1,.36,1),width .3s,background .3s;}
+.ptabs[data-phase="0"] .pt-sl{background:var(--acc);}
+.ptabs[data-phase="1"] .pt-sl{background:var(--pu);}
+.ptabs[data-phase="2"] .pt-sl{background:var(--am);}
+.ptabs[data-phase="3"] .pt-sl{background:var(--re);}
+/* STAGGER ANIMATION FOR CARDS */
+.dc:nth-child(1){animation-delay:.03s;}
+.dc:nth-child(2){animation-delay:.06s;}
+.dc:nth-child(3){animation-delay:.09s;}
+.dc:nth-child(4){animation-delay:.12s;}
+.dc:nth-child(5){animation-delay:.15s;}
+.dc:nth-child(6){animation-delay:.18s;}
+.dc:nth-child(7){animation-delay:.21s;}
+.dc:nth-child(8){animation-delay:.24s;}
+.dc:nth-child(9){animation-delay:.27s;}
+.dc:nth-child(10){animation-delay:.3s;}
+/* PHASE TAG INSIDE CARD COLORED PER PHASE */
+.ph0 .dtag.tca,.ph0 .dtag.tco,.ph0 .dtag.tr,.ph0 .dtag.tf,.ph0 .dtag.th,.ph0 .dtag.tch{border-left:none;}
+/* BETTER MOBILE CARD SPACING */
+@media(max-width:580px){
+  .dc .db{grid-template-columns:1fr;}
+  .dc .dbc:first-child{border-right:none;border-bottom:1px solid var(--b1);}
+  .thero-grid{grid-template-columns:1fr 1fr;}
+  .auc-info{grid-template-columns:1fr 1fr;}
+  .ptabs .pt{font-size:10px;padding:10px 2px;letter-spacing:.03em;}
 }
 </style>
 </head>
@@ -975,19 +1037,28 @@ async function loadAdmin(){
     <div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val acc">${approved}</div></div>
     <div class="sc"><div class="sc-lbl">Pending</div><div class="sc-val" style="color:var(--am)">${pending.length}</div></div>`;
   const gm={lose_fat:"Lose Fat",build_muscle:"Build Muscle",get_fit:"Get Fit",gym_ready:"Gym Ready"};
-  const rUser=(u,showBtns)=>`<div class="auc">
-    <div class="auc-top">
-      <div class="auc-av">${(u.full_name||u.email||"?").charAt(0).toUpperCase()}</div>
-      <div><div class="auc-n">${u.full_name||"No name"}</div><div class="auc-e">${u.email}</div></div>
-      <div class="auc-st st-${u.status}">${u.status}</div>
-    </div>
-    <div class="auc-info">
-      <div class="auc-ii"><div class="auc-il">BMI</div><div class="auc-iv">${u.bmi?u.bmi.toFixed(1):"N/A"}</div></div>
-      <div class="auc-ii"><div class="auc-il">Goal</div><div class="auc-iv">${gm[u.goal]||"N/A"}</div></div>
-      <div class="auc-ii"><div class="auc-il">Joined</div><div class="auc-iv">${fmtShort(new Date(u.created_at))}</div></div>
-    </div>
-    ${showBtns&&u.status==="pending"?`<div class="auc-btns"><button class="btn-appr" onclick="setStatus('${u.id}','approved')">Approve</button><button class="btn-rej" onclick="setStatus('${u.id}','rejected')">Reject</button></div>`:""}
-  </div>`;
+  function rUser(u,showBtns){
+  const ini=(u.full_name||u.email||"?").charAt(0).toUpperCase();
+  const bmi=u.bmi?u.bmi.toFixed(1):"N/A";
+  const goal=gm[u.goal]||"N/A";
+  const joined=fmtShort(new Date(u.created_at));
+  const btns=showBtns&&u.status==="pending"
+    ?'<div class="auc-btns"><button class="btn-appr" onclick="setStatus(''+u.id+'','approved')">Approve</button><button class="btn-rej" onclick="setStatus(''+u.id+'','rejected')">Reject</button></div>'
+    :"";
+  return '<div class="auc">'
+    +'<div class="auc-top">'
+    +'<div class="auc-av">'+ini+'</div>'
+    +'<div><div class="auc-n">'+(u.full_name||"No name")+'</div><div class="auc-e">'+u.email+'</div></div>'
+    +'<div class="auc-st st-'+u.status+'">'+u.status+'</div>'
+    +'</div>'
+    +'<div class="auc-info">'
+    +'<div class="auc-ii"><div class="auc-il">BMI</div><div class="auc-iv">'+bmi+'</div></div>'
+    +'<div class="auc-ii"><div class="auc-il">Goal</div><div class="auc-iv">'+goal+'</div></div>'
+    +'<div class="auc-ii"><div class="auc-il">Joined</div><div class="auc-iv">'+joined+'</div></div>'
+    +'</div>'
+    +btns
+    +'</div>';
+}
   document.getElementById("pendlist").innerHTML=pending.length?pending.map(u=>rUser(u,true)).join(""):"<div style=\"color:var(--t3);font-size:13px;padding:10px 0;\">No pending approvals.</div>";
   document.getElementById("allusers").innerHTML=users.map(u=>rUser(u,u.status==="pending"&&u.id!==U.id)).join("");
 }
@@ -1115,6 +1186,7 @@ function showPage(name){
   window.scrollTo(0,0);observeReveal();
 }
 
+const PHASE_COLORS=["var(--acc)","var(--pu)","var(--am)","var(--re)"];
 function showPhase(idx){
   document.querySelectorAll(".psec").forEach((s,i)=>s.classList.toggle("vis",i===idx));
   document.querySelectorAll(".pt").forEach((t,i)=>t.classList.toggle("on",i===idx));
@@ -1124,6 +1196,7 @@ function showPhase(idx){
   if(tabs[idx]&&sl&&bar){
     const br=bar.getBoundingClientRect();const tr=tabs[idx].getBoundingClientRect();
     sl.style.left=(tr.left-br.left+4)+"px";sl.style.width=(tr.width-8)+"px";
+    sl.style.background=PHASE_COLORS[idx];
   }
   renderCards(getTD());
 }
