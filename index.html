@@ -399,6 +399,33 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   .auc-info{grid-template-columns:1fr 1fr;}
   .ptabs .pt{font-size:10px;padding:10px 2px;letter-spacing:.03em;}
 }
+
+/* SCROLL ANIMATIONS */
+@keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideLeft{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.dc{opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .4s ease,border-color .2s,box-shadow .2s;}
+.dc.visible{opacity:1;transform:translateY(0);}
+.dc:nth-child(1){transition-delay:.04s;}
+.dc:nth-child(2){transition-delay:.08s;}
+.dc:nth-child(3){transition-delay:.12s;}
+.dc:nth-child(4){transition-delay:.16s;}
+.dc:nth-child(5){transition-delay:.20s;}
+.dc:nth-child(6){transition-delay:.24s;}
+.dc:nth-child(7){transition-delay:.28s;}
+.dc:nth-child(8){transition-delay:.32s;}
+.dc:nth-child(9){transition-delay:.36s;}
+.dc:nth-child(10){transition-delay:.40s;}
+/* HOVER LIFT */
+.dc:hover{transform:translateY(-2px)!important;border-color:var(--b2);}
+.sc:hover{transform:translateY(-3px);}
+/* SMOOTH EVERYTHING */
+*{scroll-behavior:smooth;}
+
+.unit-btn{background:var(--s2);border:1px solid var(--b2);border-radius:var(--rs);color:var(--t3);font-family:Inter,sans-serif;font-size:12px;font-weight:500;padding:7px 14px;cursor:pointer;transition:all .2s;}
+.unit-btn.on{background:var(--acc);color:var(--bg);border-color:var(--acc);font-weight:600;}
 </style>
 </head>
 <body>
@@ -472,9 +499,13 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         <div class="field"><label class="flabel">Age</label><input type="number" class="finput" id="oa" placeholder="25" min="10" max="100"></div>
         <div class="field"><label class="flabel">Gender</label><select class="finput" id="og"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select></div>
       </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button type="button" class="unit-btn on" id="unit-metric" onclick="setUnit('metric')">kg / cm</button>
+        <button type="button" class="unit-btn" id="unit-imperial" onclick="setUnit('imperial')">lbs / ft</button>
+      </div>
       <div class="ob-row" style="margin-bottom:12px;">
-        <div class="field"><label class="flabel">Weight (kg)</label><input type="number" class="finput" id="ow" placeholder="70" oninput="calcBMI()"></div>
-        <div class="field"><label class="flabel">Height (cm)</label><input type="number" class="finput" id="oh" placeholder="170" oninput="calcBMI()"></div>
+        <div class="field"><label class="flabel" id="wlabel">Weight (kg)</label><input type="number" class="finput" id="ow" placeholder="70" oninput="calcBMI()"></div>
+        <div class="field"><label class="flabel" id="hlabel">Height (cm)</label><input type="number" class="finput" id="oh" placeholder="170" oninput="calcBMI()"></div>
       </div>
       <div class="bmi-res" id="bmi-res">
         <div class="bmi-num" id="bmi-n">0</div>
@@ -1016,56 +1047,75 @@ function renderProfPage(){
 }
 
 async function loadAdmin(){
-  console.log("Loading admin panel...");
-  const{data:users,error:uerr}=await db.from("profiles").select("*").order("created_at",{ascending:false});
-  console.log("Admin users result:", JSON.stringify({count: users?.length, error:uerr?.message, firstUser: users?.[0]?.email}));
-  if(uerr){
-    document.getElementById("admstats").innerHTML='<div style="color:var(--re);font-size:13px;padding:10px">Error loading users: '+uerr.message+'</div>';
+  const pendEl=document.getElementById("pendlist");
+  const allEl=document.getElementById("allusers");
+  const statsEl=document.getElementById("admstats");
+  pendEl.innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px">Loading...</div>';
+  allEl.innerHTML='';
+
+  const{data:users,error}=await db.from("profiles").select("*").order("created_at",{ascending:false});
+  if(error||!users){
+    statsEl.innerHTML='<div style="color:var(--re);font-size:13px;">Error: '+(error?error.message:"no data")+'</div>';
     return;
   }
-  console.log("Users type:", typeof users, Array.isArray(users), users);
-  if(!users||!Array.isArray(users)||!users.length){
-    document.getElementById("admstats").innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px">No users found. Count: '+(users?users.length:"null")+'</div>';
-    document.getElementById("pendlist").innerHTML="";
-    document.getElementById("allusers").innerHTML="";
-    return;
-  }
+
   const pending=users.filter(u=>u.status==="pending");
   const approved=users.filter(u=>u.status==="approved").length;
-  document.getElementById("admstats").innerHTML=`
-    <div class="sc"><div class="sc-lbl">Total</div><div class="sc-val">${users.length}</div></div>
-    <div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val acc">${approved}</div></div>
-    <div class="sc"><div class="sc-lbl">Pending</div><div class="sc-val" style="color:var(--am)">${pending.length}</div></div>`;
-  const gm={lose_fat:"Lose Fat",build_muscle:"Build Muscle",get_fit:"Get Fit",gym_ready:"Gym Ready"};
-  function rUser(u,showBtns){
-  const ini=(u.full_name||u.email||"?").charAt(0).toUpperCase();
-  const bmi=u.bmi?u.bmi.toFixed(1):"N/A";
-  const goal=gm[u.goal]||"N/A";
-  const joined=fmtShort(new Date(u.created_at));
-  const uid=u.id;
-  const btns=showBtns&&u.status==="pending"
-    ?["<div class='auc-btns'>",
-      "<button class='btn-appr' onclick=\"setStatus('"+uid+"','approved')\">Approve</button>",
-      "<button class='btn-rej' onclick=\"setStatus('"+uid+"','rejected')\">Reject</button>",
-      "</div>"].join("")
-    :"";
-  return '<div class="auc">'
-    +'<div class="auc-top">'
-    +'<div class="auc-av">'+ini+'</div>'
-    +'<div><div class="auc-n">'+(u.full_name||"No name")+'</div><div class="auc-e">'+u.email+'</div></div>'
-    +'<div class="auc-st st-'+u.status+'">'+u.status+'</div>'
-    +'</div>'
-    +'<div class="auc-info">'
-    +'<div class="auc-ii"><div class="auc-il">BMI</div><div class="auc-iv">'+bmi+'</div></div>'
-    +'<div class="auc-ii"><div class="auc-il">Goal</div><div class="auc-iv">'+goal+'</div></div>'
-    +'<div class="auc-ii"><div class="auc-il">Joined</div><div class="auc-iv">'+joined+'</div></div>'
-    +'</div>'
-    +btns
-    +'</div>';
+
+  statsEl.innerHTML=
+    '<div class="sc"><div class="sc-lbl">Total</div><div class="sc-val">'+users.length+'</div></div>'+
+    '<div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val acc">'+approved+'</div></div>'+
+    '<div class="sc"><div class="sc-lbl">Pending</div><div class="sc-val" style="color:var(--am)">'+pending.length+'</div></div>';
+
+  const gmap={lose_fat:"Lose Fat",build_muscle:"Build Muscle",get_fit:"Get Fit",gym_ready:"Gym Ready"};
+
+  function buildUserCard(u,showBtns){
+    const ini=(u.full_name||u.email||"?").charAt(0).toUpperCase();
+    const bmi=u.bmi?Number(u.bmi).toFixed(1):"N/A";
+    const goal=gmap[u.goal]||"N/A";
+    const joined=u.created_at?new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"";
+    const div=document.createElement("div");
+    div.className="auc";
+    div.innerHTML=
+      '<div class="auc-top">'+
+        '<div class="auc-av">'+ini+'</div>'+
+        '<div style="flex:1"><div class="auc-n">'+(u.full_name||"No name")+'</div><div class="auc-e">'+u.email+'</div></div>'+
+        '<div class="auc-st st-'+u.status+'">'+u.status+'</div>'+
+      '</div>'+
+      '<div class="auc-info">'+
+        '<div class="auc-ii"><div class="auc-il">BMI</div><div class="auc-iv">'+bmi+'</div></div>'+
+        '<div class="auc-ii"><div class="auc-il">Goal</div><div class="auc-iv">'+goal+'</div></div>'+
+        '<div class="auc-ii"><div class="auc-il">Joined</div><div class="auc-iv">'+joined+'</div></div>'+
+      '</div>';
+    if(showBtns&&u.status==="pending"){
+      const btnsDiv=document.createElement("div");
+      btnsDiv.className="auc-btns";
+      const apprBtn=document.createElement("button");
+      apprBtn.className="btn-appr";
+      apprBtn.textContent="Approve";
+      apprBtn.onclick=()=>setStatus(u.id,"approved");
+      const rejBtn=document.createElement("button");
+      rejBtn.className="btn-rej";
+      rejBtn.textContent="Reject";
+      rejBtn.onclick=()=>setStatus(u.id,"rejected");
+      btnsDiv.appendChild(apprBtn);
+      btnsDiv.appendChild(rejBtn);
+      div.appendChild(btnsDiv);
+    }
+    return div;
+  }
+
+  pendEl.innerHTML="";
+  if(pending.length){
+    pending.forEach(u=>pendEl.appendChild(buildUserCard(u,true)));
+  }else{
+    pendEl.innerHTML='<div style="color:var(--t3);font-size:13px;padding:10px 0;">No pending approvals.</div>';
+  }
+
+  allEl.innerHTML="";
+  users.forEach(u=>allEl.appendChild(buildUserCard(u,false)));
 }
-  document.getElementById("pendlist").innerHTML=pending.length?pending.map(u=>rUser(u,true)).join(""):"<div style=\"color:var(--t3);font-size:13px;padding:10px 0;\">No pending approvals.</div>";
-  document.getElementById("allusers").innerHTML=users.map(u=>rUser(u,u.status==="pending"&&u.id!==U.id)).join("");
-}
+
 
 async function setStatus(uid,status){
   await db.from("profiles").update({status}).eq("id",uid);
@@ -1076,11 +1126,37 @@ async function setStatus(uid,status){
 function selGoal(g){GOAL=g;document.querySelectorAll("[id^=\"g-\"]").forEach(el=>el.classList.remove("sel"));document.getElementById("g-"+g).classList.add("sel");}
 function selAct(a){ACT=a;document.querySelectorAll("[id^=\"a-\"]").forEach(el=>el.classList.remove("sel"));document.getElementById("a-"+a).classList.add("sel");}
 
+let currentUnit="metric";
+function setUnit(unit){
+  currentUnit=unit;
+  document.getElementById("unit-metric").classList.toggle("on",unit==="metric");
+  document.getElementById("unit-imperial").classList.toggle("on",unit==="imperial");
+  if(unit==="metric"){
+    document.getElementById("wlabel").textContent="Weight (kg)";
+    document.getElementById("hlabel").textContent="Height (cm)";
+    document.getElementById("ow").placeholder="70";
+    document.getElementById("oh").placeholder="170";
+  }else{
+    document.getElementById("wlabel").textContent="Weight (lbs)";
+    document.getElementById("hlabel").textContent="Height (ft)";
+    document.getElementById("ow").placeholder="154";
+    document.getElementById("oh").placeholder="5.9";
+  }
+  document.getElementById("ow").value="";
+  document.getElementById("oh").value="";
+  document.getElementById("bmi-res").style.display="none";
+}
 function calcBMI(){
-  const w=parseFloat(document.getElementById("ow").value);
-  const h=parseFloat(document.getElementById("oh").value)/100;
-  if(!w||!h||h<=0)return;
-  const bmi=w/(h*h);
+  const wRaw=parseFloat(document.getElementById("ow").value);
+  const hRaw=parseFloat(document.getElementById("oh").value);
+  if(!wRaw||!hRaw)return;
+  let wKg=wRaw,hM=hRaw/100;
+  if(currentUnit==="imperial"){
+    wKg=wRaw*0.453592;
+    hM=hRaw*0.3048;
+  }
+  if(hM<=0)return;
+  const bmi=wKg/(hM*hM);
   document.getElementById("bmi-res").style.display="block";
   document.getElementById("bmi-n").textContent=bmi.toFixed(1);
   const{cat}=getBMI(bmi);
@@ -1112,13 +1188,16 @@ function goStep(from,to){
 
 async function finishOb(){
   const btn=document.getElementById("ob-fin");btn.disabled=true;btn.textContent="Saving...";
-  const w=parseFloat(document.getElementById("ow").value);
-  const h=parseFloat(document.getElementById("oh").value)/100;
-  const bmi=w/(h*h);
+  const wRaw=parseFloat(document.getElementById("ow").value);
+  const hRaw=parseFloat(document.getElementById("oh").value);
+  let wKg=wRaw,hCm=hRaw;
+  if(currentUnit==="imperial"){wKg=wRaw*0.453592;hCm=hRaw*30.48;}
+  const hM=hCm/100;
+  const bmi=wKg/(hM*hM);
   const{error}=await db.from("profiles").update({
     goal:GOAL,age:parseInt(document.getElementById("oa").value),
     gender:document.getElementById("og").value,
-    weight_kg:w,height_cm:parseFloat(document.getElementById("oh").value),
+    weight_kg:parseFloat(wKg.toFixed(1)),height_cm:parseFloat(hCm.toFixed(1)),
     bmi:parseFloat(bmi.toFixed(2)),activity_level:ACT
   }).eq("id",U.id);
   if(error){showToast("Error saving. Please try again.","err");btn.disabled=false;btn.textContent="Start My Ritual";return;}
@@ -1161,7 +1240,9 @@ async function doSignup(){
   const err=document.getElementById("serr");const suc=document.getElementById("ssucc");
   err.style.display="none";suc.style.display="none";
   if(!name||!email||!pass){err.textContent="Please fill in all fields";err.style.display="block";return;}
-  if(pass.length<6){err.textContent="Password must be at least 6 characters";err.style.display="block";return;}
+  if(pass.length<8){err.textContent="Password must be at least 8 characters";err.style.display="block";return;}
+  if(!/[A-Z]/.test(pass)){err.textContent="Password must contain at least one uppercase letter";err.style.display="block";return;}
+  if(!/[0-9]/.test(pass)){err.textContent="Password must contain at least one number";err.style.display="block";return;}
   const btn=event.currentTarget;btn.disabled=true;btn.textContent="Creating account...";
   const{data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
   btn.disabled=false;btn.textContent="Create Account";
