@@ -224,15 +224,23 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .dc.done{opacity:.32;}
 .dc.missed{border-color:rgba(255,79,79,.2);}
 .dc.cheat{border-color:rgba(255,179,71,.2);}
-/* PHASE CARD COLORS */
-.dc.ph0{border-left:3px solid rgba(200,255,0,0.3);background:linear-gradient(to right,rgba(200,255,0,0.03),var(--s1));}
-.dc.ph1{border-left:3px solid rgba(183,148,244,0.3);background:linear-gradient(to right,rgba(183,148,244,0.04),var(--s1));}
-.dc.ph2{border-left:3px solid rgba(255,179,71,0.3);background:linear-gradient(to right,rgba(255,179,71,0.04),var(--s1));}
-.dc.ph3{border-left:3px solid rgba(255,79,79,0.3);background:linear-gradient(to right,rgba(255,79,79,0.04),var(--s1));}
-.dc.ph0.today{border-left:3px solid rgba(200,255,0,0.7);box-shadow:0 0 0 1px rgba(200,255,0,0.08),0 4px 16px rgba(0,0,0,0.3);}
-.dc.ph1.today{border-left:3px solid rgba(183,148,244,0.7);box-shadow:0 0 0 1px rgba(183,148,244,0.08);}
-.dc.ph2.today{border-left:3px solid rgba(255,179,71,0.7);box-shadow:0 0 0 1px rgba(255,179,71,0.08);}
-.dc.ph3.today{border-left:3px solid rgba(255,79,79,0.7);box-shadow:0 0 0 1px rgba(255,79,79,0.08);}
+/* PHASE CARD COLORS - STRONG DIFFERENTIATION */
+.dc.ph0{border:1px solid rgba(200,255,0,0.25);border-left:4px solid rgba(200,255,0,0.8);background:linear-gradient(135deg,rgba(200,255,0,0.06) 0%,var(--s1) 50%);}
+.dc.ph1{border:1px solid rgba(183,148,244,0.25);border-left:4px solid rgba(183,148,244,0.8);background:linear-gradient(135deg,rgba(183,148,244,0.08) 0%,var(--s1) 50%);}
+.dc.ph2{border:1px solid rgba(255,179,71,0.25);border-left:4px solid rgba(255,179,71,0.8);background:linear-gradient(135deg,rgba(255,179,71,0.08) 0%,var(--s1) 50%);}
+.dc.ph3{border:1px solid rgba(255,79,79,0.25);border-left:4px solid rgba(255,79,79,0.8);background:linear-gradient(135deg,rgba(255,79,79,0.08) 0%,var(--s1) 50%);}
+.dc.ph0.today{border:1px solid rgba(200,255,0,0.5);border-left:4px solid var(--acc);box-shadow:0 0 20px rgba(200,255,0,0.12),0 4px 16px rgba(0,0,0,0.3);}
+.dc.ph1.today{border:1px solid rgba(183,148,244,0.5);border-left:4px solid var(--pu);box-shadow:0 0 20px rgba(183,148,244,0.12);}
+.dc.ph2.today{border:1px solid rgba(255,179,71,0.5);border-left:4px solid var(--am);box-shadow:0 0 20px rgba(255,179,71,0.12);}
+.dc.ph3.today{border:1px solid rgba(255,79,79,0.5);border-left:4px solid var(--re);box-shadow:0 0 20px rgba(255,79,79,0.12);}
+.dc.ph0 .dh{border-bottom:1px solid rgba(200,255,0,0.1);}
+.dc.ph1 .dh{border-bottom:1px solid rgba(183,148,244,0.1);}
+.dc.ph2 .dh{border-bottom:1px solid rgba(255,179,71,0.1);}
+.dc.ph3 .dh{border-bottom:1px solid rgba(255,79,79,0.1);}
+.dc.ph0 .dn{color:rgba(200,255,0,0.8);font-size:12px;}
+.dc.ph1 .dn{color:rgba(183,148,244,0.8);font-size:12px;}
+.dc.ph2 .dn{color:rgba(255,179,71,0.8);font-size:12px;}
+.dc.ph3 .dn{color:rgba(255,79,79,0.8);font-size:12px;}
 /* REVEAL ANIMATIONS */
 .reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
@@ -653,11 +661,9 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   <div class="page hidden" id="page-admin">
     <div class="pg-title">Admin Panel</div>
     <div class="pg-sub">Manage RITUAL members</div>
-    <div class="adm-stats" id="admstats"></div>
-    <div class="card-lbl" style="margin-bottom:10px">Pending Approvals</div>
-    <div id="pendlist"></div>
-    <div class="card-lbl" style="margin:16px 0 10px">All Members</div>
-    <div id="allusers"></div>
+    <div id="admin-content">
+      <div style="text-align:center;padding:40px;color:var(--t3);font-size:13px;">Loading...</div>
+    </div>
   </div>
 
   <nav class="bnav">
@@ -1047,105 +1053,96 @@ function renderProfPage(){
 }
 
 async function loadAdmin(){
-  const pendEl=document.getElementById("pendlist");
-  const allEl=document.getElementById("allusers");
-  const statsEl=document.getElementById("admstats");
-
-  statsEl.innerHTML='<div style="color:var(--t3);padding:10px;font-size:13px;">Loading members...</div>';
-  pendEl.innerHTML="";
-  allEl.innerHTML="";
-
-  const{data,error}=await db.from("profiles").select("*").order("created_at",{ascending:false});
-
-  if(error){
-    statsEl.innerHTML='<div style="color:var(--re);padding:10px;font-size:13px;">Error: '+error.message+'</div>';
-    return;
-  }
-  if(!data||!data.length){
-    statsEl.innerHTML='<div style="color:var(--t3);padding:10px;font-size:13px;">No members found.</div>';
-    return;
-  }
-
-  const total=data.length;
-  const approved=data.filter(u=>u.status==="approved").length;
-  const pending=data.filter(u=>u.status==="pending").length;
-
-  statsEl.innerHTML=
-    '<div class="sc"><div class="sc-lbl">Total</div><div class="sc-val">'+total+'</div><div class="sc-sub">members</div></div>'+
-    '<div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val acc">'+approved+'</div><div class="sc-sub">active</div></div>'+
-    '<div class="sc"><div class="sc-lbl">Pending</div><div class="sc-val" style="color:var(--am)">'+pending+'</div><div class="sc-sub">waiting</div></div>';
-
-  // Pending users
-  const pendingUsers=data.filter(u=>u.status==="pending");
-  if(pendingUsers.length===0){
-    pendEl.innerHTML='<div style="color:var(--t3);font-size:13px;padding:12px 0;">No pending approvals right now.</div>';
-  }else{
-    pendingUsers.forEach(function(u){
-      pendEl.appendChild(buildCard(u,true));
+  const el=document.getElementById("admin-content");
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--t3);font-size:13px;">Loading members...</div>';
+  
+  try{
+    const r=await db.from("profiles").select("id,email,full_name,status,is_admin,bmi,goal,weight_kg,height_cm,age,created_at").order("created_at",{ascending:false});
+    if(r.error)throw r.error;
+    const users=r.data||[];
+    
+    const total=users.length;
+    const approved=users.filter(u=>u.status==="approved").length;
+    const pend=users.filter(u=>u.status==="pending").length;
+    
+    let html='';
+    
+    // Stats
+    html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;">';
+    html+='<div class="sc"><div class="sc-lbl">Total</div><div class="sc-val">'+total+'</div></div>';
+    html+='<div class="sc"><div class="sc-lbl">Approved</div><div class="sc-val acc">'+approved+'</div></div>';
+    html+='<div class="sc"><div class="sc-lbl">Pending</div><div class="sc-val" style="color:var(--am)">'+pend+'</div></div>';
+    html+='</div>';
+    
+    // Pending section
+    const pendUsers=users.filter(u=>u.status==="pending");
+    html+='<div class="card-lbl" style="margin-bottom:10px;">Pending Approvals ('+pendUsers.length+')</div>';
+    if(pendUsers.length===0){
+      html+='<div style="color:var(--t3);font-size:13px;padding:12px;background:var(--s1);border-radius:var(--rs);margin-bottom:16px;">No pending approvals.</div>';
+    }else{
+      pendUsers.forEach(function(u){html+=makeUserHTML(u,true);});
+    }
+    
+    // All members
+    html+='<div class="card-lbl" style="margin:16px 0 10px;">All Members ('+users.length+')</div>';
+    users.forEach(function(u){html+=makeUserHTML(u,false);});
+    
+    el.innerHTML=html;
+    
+    // Attach button events after rendering
+    el.querySelectorAll("[data-approve]").forEach(function(btn){
+      btn.addEventListener("click",function(){setStatus(this.getAttribute("data-approve"),"approved");});
     });
+    el.querySelectorAll("[data-reject]").forEach(function(btn){
+      btn.addEventListener("click",function(){setStatus(this.getAttribute("data-reject"),"rejected");});
+    });
+    
+  }catch(e){
+    el.innerHTML='<div style="color:var(--re);padding:16px;background:var(--re2);border-radius:var(--rs);">Error loading members: '+e.message+'</div>';
   }
-
-  // All users
-  data.forEach(function(u){
-    allEl.appendChild(buildCard(u,false));
-  });
 }
 
-function buildCard(u,showBtns){
+function makeUserHTML(u,showBtns){
   const gmap={lose_fat:"Lose Fat",build_muscle:"Build Muscle",get_fit:"Get Fit",gym_ready:"Gym Ready"};
   const ini=(u.full_name||u.email||"?").charAt(0).toUpperCase();
   const bmi=u.bmi?Number(u.bmi).toFixed(1):"N/A";
   const goal=gmap[u.goal]||"N/A";
   const joined=u.created_at?new Date(u.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"";
-  const weight=u.weight_kg?u.weight_kg+"kg":"N/A";
-  const height=u.height_cm?u.height_cm+"cm":"N/A";
-
-  const wrap=document.createElement("div");
-  wrap.className="auc";
-  wrap.style.marginBottom="10px";
-
-  const top=document.createElement("div");
-  top.className="auc-top";
-  top.innerHTML=
-    '<div class="auc-av">'+ini+'</div>'+
-    '<div style="flex:1;min-width:0;">'+
-      '<div class="auc-n">'+(u.full_name||"No name set")+'</div>'+
-      '<div class="auc-e" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+u.email+'</div>'+
-    '</div>'+
-    '<div class="auc-st st-'+u.status+'">'+u.status+'</div>';
-  wrap.appendChild(top);
-
-  const info=document.createElement("div");
-  info.className="auc-info";
-  info.innerHTML=
-    '<div class="auc-ii"><div class="auc-il">BMI</div><div class="auc-iv">'+bmi+'</div></div>'+
-    '<div class="auc-ii"><div class="auc-il">Goal</div><div class="auc-iv">'+goal+'</div></div>'+
-    '<div class="auc-ii"><div class="auc-il">Weight</div><div class="auc-iv">'+weight+'</div></div>'+
-    '<div class="auc-ii"><div class="auc-il">Height</div><div class="auc-iv">'+height+'</div></div>'+
-    '<div class="auc-ii"><div class="auc-il">Age</div><div class="auc-iv">'+(u.age||"N/A")+'</div></div>'+
-    '<div class="auc-ii"><div class="auc-il">Joined</div><div class="auc-iv">'+joined+'</div></div>';
-  wrap.appendChild(info);
-
+  const statusColors={approved:"var(--gr)",pending:"var(--am)",rejected:"var(--re)"};
+  const col=statusColors[u.status]||"var(--t3)";
+  
+  let h='<div style="background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:16px;margin-bottom:10px;">';
+  
+  // Top row
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
+  h+='<div style="width:40px;height:40px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:16px;font-weight:700;color:var(--bg);flex-shrink:0;">'+ini+'</div>';
+  h+='<div style="flex:1;min-width:0;">';
+  h+='<div style="font-size:14px;font-weight:600;color:var(--t1);">'+(u.full_name||"No name")+'</div>';
+  h+='<div style="font-size:12px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+u.email+'</div>';
+  h+='</div>';
+  h+='<div style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:var(--pill);border:1px solid '+col+';color:'+col+';text-transform:uppercase;">'+u.status+'</div>';
+  h+='</div>';
+  
+  // Info grid
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:'+(showBtns?"12":"0")+'px;">';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">BMI</div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+bmi+'</div></div>';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Goal</div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+goal+'</div></div>';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Age</div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+(u.age||"N/A")+'</div></div>';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Weight</div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+(u.weight_kg?u.weight_kg+"kg":"N/A")+'</div></div>';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Height</div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+(u.height_cm?u.height_cm+"cm":"N/A")+'</div></div>';
+  h+='<div style="background:var(--s2);border-radius:var(--rs);padding:8px 10px;"><div style="font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Joined</div><div style="font-size:12px;font-weight:600;color:var(--t1);">'+joined+'</div></div>';
+  h+='</div>';
+  
+  // Approve/Reject buttons
   if(showBtns){
-    const btns=document.createElement("div");
-    btns.className="auc-btns";
-
-    const ab=document.createElement("button");
-    ab.className="btn-appr";
-    ab.textContent="✓ Approve";
-    ab.addEventListener("click",function(){setStatus(u.id,"approved");});
-
-    const rb=document.createElement("button");
-    rb.className="btn-rej";
-    rb.textContent="✗ Reject";
-    rb.addEventListener("click",function(){setStatus(u.id,"rejected");});
-
-    btns.appendChild(ab);
-    btns.appendChild(rb);
-    wrap.appendChild(btns);
+    h+='<div style="display:flex;gap:8px;">';
+    h+='<button data-approve="'+u.id+'" style="flex:1;background:var(--gr2);border:1px solid rgba(61,214,140,.3);border-radius:var(--rs);color:var(--gr);font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:10px;cursor:pointer;">✓ Approve</button>';
+    h+='<button data-reject="'+u.id+'" style="flex:1;background:var(--re2);border:1px solid rgba(255,79,79,.3);border-radius:var(--rs);color:var(--re);font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:10px;cursor:pointer;">✗ Reject</button>';
+    h+='</div>';
   }
-
-  return wrap;
+  
+  h+='</div>';
+  return h;
 }
 
 
