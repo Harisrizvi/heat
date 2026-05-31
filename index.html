@@ -54,6 +54,28 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .food-log-item .fl-cal{color:var(--t2);margin-left:auto;margin-right:10px;}
 .food-log-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
 .cal-arc-over{stroke:var(--re)!important;}
+.water-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.water-amt{font-family:Oswald,sans-serif;font-size:28px;font-weight:700;color:var(--acc);line-height:1;}
+.water-unit{font-size:13px;color:var(--t3);font-family:Inter,sans-serif;font-weight:400;margin-left:4px;}
+.water-glasses{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.water-glass{width:26px;height:34px;border:2px solid var(--s4);border-radius:3px 3px 7px 7px;position:relative;overflow:hidden;background:var(--s2);transition:all .2s;}
+.water-glass.full{border-color:var(--acc);background:linear-gradient(to top,var(--acc) 70%,transparent 70%);}
+.water-ctrls{display:flex;align-items:center;gap:8px;}
+.water-btn{flex:1;background:var(--s3);color:var(--t1);border:1px solid var(--s4);border-radius:var(--rs);padding:10px;font-size:14px;font-weight:600;cursor:pointer;}
+.water-btn-add{background:var(--acc);color:var(--bg);border-color:var(--acc);}
+.water-each{font-size:11px;color:var(--t3);white-space:nowrap;}
+.standing{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
+.standing-hd{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;}
+.standing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stile{display:flex;align-items:center;gap:10px;background:var(--s2);border-radius:var(--rs);padding:10px;cursor:pointer;transition:background .15s;}
+.stile:active{background:var(--s3);}
+.stile-ring{width:44px;height:44px;flex-shrink:0;}
+.stile-ring svg{width:44px;height:44px;transition:stroke-dashoffset .6s ease;}
+.stile-ring circle{transition:stroke-dashoffset .6s ease;}
+.stile-streak{display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:20px;font-weight:700;color:var(--am);border:3px solid var(--am);border-radius:50%;}
+.stile-info{min-width:0;}
+.stile-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.stile-val{font-size:14px;font-weight:600;color:var(--t1);white-space:nowrap;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-text{font-family:Oswald,sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--t3);}
 
@@ -586,6 +608,27 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
     </div>
+    <div class="standing reveal" id="standing-card">
+      <div class="standing-hd">Today's Standing</div>
+      <div class="standing-grid" id="standing-grid">
+        <div class="stile" onclick="showPage('diet')">
+          <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-cal-arc" cx="22" cy="22" r="18" fill="none" stroke="var(--acc)" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
+          <div class="stile-info"><div class="stile-lbl">Calories</div><div class="stile-val" id="st-cal">0 / 0</div></div>
+        </div>
+        <div class="stile" onclick="showPage('diet')">
+          <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-water-arc" cx="22" cy="22" r="18" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
+          <div class="stile-info"><div class="stile-lbl">Water</div><div class="stile-val" id="st-water">0 / 0 L</div></div>
+        </div>
+        <div class="stile" onclick="showPage('habits')">
+          <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-hab-arc" cx="22" cy="22" r="18" fill="none" stroke="#3dd68c" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
+          <div class="stile-info"><div class="stile-lbl">Habits</div><div class="stile-val" id="st-hab">0 / 0</div></div>
+        </div>
+        <div class="stile" onclick="scrollToToday()">
+          <div class="stile-ring stile-streak"><span id="st-streak-n">0</span></div>
+          <div class="stile-info"><div class="stile-lbl">Streak</div><div class="stile-val" id="st-streak">0 days</div></div>
+        </div>
+      </div>
+    </div>
     <div class="stats-row reveal">
       <div class="sc"><div class="sc-lbl">Done</div><div class="sc-val acc" id="svd">0</div><div class="sc-sub">of 40 days</div></div>
       <div class="sc"><div class="sc-lbl">Streak</div><div class="sc-val" id="svs">0</div><div class="sc-sub">days in a row</div></div>
@@ -653,6 +696,19 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
       <div id="food-log" class="food-log"></div>
+    </div>
+    <div class="card reveal" id="water-card">
+      <div class="card-lbl">Water Today</div>
+      <div class="water-top">
+        <div class="water-amt"><span id="water-l">0.0</span><span class="water-unit">/ <span id="water-goal-l">2.5</span> L</span></div>
+        <button class="cal-editbtn" onclick="editWaterGoal()">Edit goal</button>
+      </div>
+      <div class="water-glasses" id="water-glasses"></div>
+      <div class="water-ctrls">
+        <button class="water-btn" onclick="changeWater(-1)">− Glass</button>
+        <button class="water-btn water-btn-add" onclick="changeWater(1)">+ Glass</button>
+        <span class="water-each">1 glass ≈ 250 ml</span>
+      </div>
     </div>
     <div class="card reveal">
       <div class="card-lbl">AI Diet Plan</div>
@@ -911,6 +967,43 @@ function renderHome(){
   const td=getTD();
   renderToday(td);renderStats(td);renderCal(td);renderMot(td);renderCards(td);
   document.getElementById("nstreak").textContent=getStreak()+" day streak";
+  renderStanding();
+}
+
+// ===== Today's Standing dashboard (modular tiles) =====
+function setArc(id,frac){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const C=113; // 2*pi*18
+  el.style.strokeDashoffset=C*(1-Math.min(1,Math.max(0,frac)));
+}
+
+async function renderStanding(){
+  if(!P||!U)return;
+  // Streak + habits are already in memory
+  const streak=getStreak();
+  document.getElementById("st-streak-n").textContent=streak;
+  document.getElementById("st-streak").textContent=streak+(streak===1?" day":" days");
+  const totalHab=HABITS.length;
+  const doneHab=HABITS.filter(h=>HLOGS[h.id]&&HLOGS[h.id].completed).length;
+  document.getElementById("st-hab").textContent=doneHab+" / "+(totalHab||0);
+  setArc("st-hab-arc",totalHab?doneHab/totalHab:0);
+  // Calories + water need today's totals from Supabase
+  const tk=todayKey();
+  try{
+    const{data:fl}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
+    const eaten=(fl||[]).reduce((s,f)=>s+Number(f.calories),0);
+    const target=P.cal_target||calcCalTarget();
+    document.getElementById("st-cal").textContent=eaten+" / "+target;
+    setArc("st-cal-arc",target?eaten/target:0);
+  }catch(e){document.getElementById("st-cal").textContent="—";}
+  try{
+    const{data:wl}=await db.from("water_logs").select("glasses").eq("user_id",U.id).eq("log_date",tk).maybeSingle();
+    const ml=(wl?Number(wl.glasses):0)*250;
+    const goal=P.water_goal_ml||calcWaterGoal();
+    document.getElementById("st-water").textContent=(ml/1000).toFixed(1)+" / "+(goal/1000).toFixed(1)+" L";
+    setArc("st-water-arc",goal?ml/goal:0);
+  }catch(e){document.getElementById("st-water").textContent="—";}
 }
 
 function renderToday(td){
@@ -1143,6 +1236,62 @@ async function editCalTarget(){
   }catch(e){/* column may not exist yet; UI still updates */}
 }
 
+// ===== Water Tracker =====
+const GLASS_ML=250;
+let WATER_GLASSES=0, WATER_GOAL_ML=2500;
+
+function calcWaterGoal(){
+  // ~35 ml per kg body weight, sensible default
+  const w=P.weight_kg||70;
+  return Math.round((w*35)/50)*50; // round to nearest 50ml
+}
+
+async function loadWaterTracker(){
+  WATER_GOAL_ML = P.water_goal_ml || calcWaterGoal();
+  try{
+    const{data}=await db.from("water_logs").select("*").eq("user_id",U.id).eq("log_date",todayKey()).maybeSingle();
+    WATER_GLASSES = data ? Number(data.glasses) : 0;
+  }catch(e){WATER_GLASSES=0;}
+  renderWater();
+}
+
+function renderWater(){
+  const ml=WATER_GLASSES*GLASS_ML;
+  document.getElementById("water-l").textContent=(ml/1000).toFixed(1);
+  document.getElementById("water-goal-l").textContent=(WATER_GOAL_ML/1000).toFixed(1);
+  const goalGlasses=Math.max(WATER_GLASSES,Math.ceil(WATER_GOAL_ML/GLASS_ML));
+  let html="";
+  for(let i=0;i<goalGlasses;i++){html+=`<div class="water-glass${i<WATER_GLASSES?' full':''}"></div>`;}
+  document.getElementById("water-glasses").innerHTML=html;
+}
+
+async function changeWater(d){
+  const next=WATER_GLASSES+d;
+  if(next<0)return;
+  WATER_GLASSES=next;
+  renderWater();
+  try{
+    await db.from("water_logs").upsert(
+      {user_id:U.id,log_date:todayKey(),glasses:WATER_GLASSES},
+      {onConflict:"user_id,log_date"}
+    );
+  }catch(e){showToast("Could not save water","err");}
+}
+
+async function editWaterGoal(){
+  const curL=(WATER_GOAL_ML/1000).toFixed(1);
+  const val=prompt("Set your daily water goal in litres:",curL);
+  if(val===null)return;
+  const l=parseFloat(val);
+  if(!l||l<0.5||l>10){showToast("Enter a value between 0.5 and 10 L","err");return;}
+  WATER_GOAL_ML=Math.round(l*1000);
+  renderWater();
+  try{
+    await db.from("profiles").update({water_goal_ml:WATER_GOAL_ML}).eq("id",U.id);
+    P.water_goal_ml=WATER_GOAL_ML;
+  }catch(e){/* column may not exist yet */}
+}
+
 function renderDiet(){
   if(!P)return;
   const bmi=P.bmi||0;
@@ -1156,6 +1305,7 @@ function renderDiet(){
   }
   document.getElementById("dbmdesc").textContent=fullDesc;
   loadCalTracker();
+  loadWaterTracker();
   loadDietPlan();
   const meals=[
     {t:"Morning",n:"Breakfast",d:"2 boiled eggs + 1 roti + chai without sugar."},
@@ -1593,7 +1743,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.2";
+const APP_VERSION = "2026.05.31.4";
 
 async function checkForUpdate(){
   try{
