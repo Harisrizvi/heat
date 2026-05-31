@@ -489,7 +489,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div class="ob-dots"><div class="ob-dot cur"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div></div>
       <div class="ob-ey">Step 1 of 4</div>
       <div class="ob-title">What is your main goal?</div>
-      <div class="ob-sub">This shapes your entire plan.</div>
+      <div class="ob-sub">Select one or more. This shapes your entire plan.</div>
       <div class="ob-grid">
         <div class="ob-opt" onclick="selGoal('lose_fat')" id="g-lose_fat"><div class="ob-opt-icon">🔥</div><div class="ob-opt-lbl">Lose Fat</div><div class="ob-opt-sub">Burn belly fat</div></div>
         <div class="ob-opt" onclick="selGoal('build_muscle')" id="g-build_muscle"><div class="ob-opt-icon">💪</div><div class="ob-opt-lbl">Build Muscle</div><div class="ob-opt-sub">Gain strength</div></div>
@@ -763,6 +763,30 @@ function getBMI(bmi){
   return{cat:"Obese",desc:"Prioritize fat loss with a calorie deficit and daily movement."};
 }
 
+// Calculate ideal weight range using Devine formula + healthy BMI band
+// Returns a realistic range, not a single low number
+function getIdealWeight(heightCm,gender){
+  if(!heightCm||heightCm<=0)return null;
+  const hM=heightCm/100;
+  const inchesOver5ft=(heightCm-152.4)/2.54;
+  // Devine formula (medical baseline)
+  let devine;
+  if(gender==="female")devine=45.5+2.3*Math.max(0,inchesOver5ft);
+  else devine=50+2.3*Math.max(0,inchesOver5ft);
+  // Healthy BMI range 19 to 24.9 gives realistic range
+  const lowBmi=19,highBmi=24.9;
+  const lowWeight=lowBmi*hM*hM;
+  const highWeight=highBmi*hM*hM;
+  // Athletic upper bound at BMI 27 for muscular builds
+  const athleticWeight=27*hM*hM;
+  return{
+    devine:Math.round(devine),
+    low:Math.round(lowWeight),
+    high:Math.round(highWeight),
+    athletic:Math.round(athleticWeight)
+  };
+}
+
 async function init(){
   drawBG();
   try{
@@ -961,7 +985,12 @@ function renderDiet(){
   document.getElementById("dbmin").textContent=bmi.toFixed(1);
   const{cat,desc}=getBMI(bmi);
   document.getElementById("dbmcat").textContent=cat;
-  document.getElementById("dbmdesc").textContent=desc;
+  const ideal=getIdealWeight(P.height_cm,P.gender);
+  let fullDesc=desc;
+  if(ideal){
+    fullDesc=desc+" Your healthy weight range is "+ideal.low+" to "+ideal.high+"kg, or up to "+ideal.athletic+"kg if you carry good muscle.";
+  }
+  document.getElementById("dbmdesc").textContent=fullDesc;
   loadDietPlan();
   const meals=[
     {t:"Morning",n:"Breakfast",d:"2 boiled eggs + 1 roti + chai without sugar."},
@@ -1152,7 +1181,13 @@ async function setStatus(uid,status){
   loadAdmin();
 }
 
-function selGoal(g){GOAL=g;document.querySelectorAll("[id^=\"g-\"]").forEach(el=>el.classList.remove("sel"));document.getElementById("g-"+g).classList.add("sel");}
+let GOALS=[];
+function selGoal(g){
+  const idx=GOALS.indexOf(g);
+  if(idx>=0){GOALS.splice(idx,1);document.getElementById("g-"+g).classList.remove("sel");}
+  else{GOALS.push(g);document.getElementById("g-"+g).classList.add("sel");}
+  GOAL=GOALS[0]||"";
+}
 function selAct(a){ACT=a;document.querySelectorAll("[id^=\"a-\"]").forEach(el=>el.classList.remove("sel"));document.getElementById("a-"+a).classList.add("sel");}
 
 let currentUnit="metric";
@@ -1179,21 +1214,28 @@ function calcBMI(){
   const wRaw=parseFloat(document.getElementById("ow").value);
   const hRaw=parseFloat(document.getElementById("oh").value);
   if(!wRaw||!hRaw)return;
-  let wKg=wRaw,hM=hRaw/100;
+  let wKg=wRaw,hCm=hRaw,hM=hRaw/100;
   if(currentUnit==="imperial"){
     wKg=wRaw*0.453592;
-    hM=hRaw*0.3048;
+    hCm=hRaw*30.48;
+    hM=hCm/100;
   }
   if(hM<=0)return;
   const bmi=wKg/(hM*hM);
   document.getElementById("bmi-res").style.display="block";
   document.getElementById("bmi-n").textContent=bmi.toFixed(1);
   const{cat}=getBMI(bmi);
-  document.getElementById("bmi-c").textContent=cat;
+  const gender=document.getElementById("og").value||"male";
+  const ideal=getIdealWeight(hCm,gender);
+  let extra="";
+  if(ideal){
+    extra=" · Healthy range "+ideal.low+" to "+ideal.high+"kg (up to "+ideal.athletic+"kg if muscular)";
+  }
+  document.getElementById("bmi-c").textContent=cat+extra;
 }
 
 function goStep(from,to){
-  if(from===1&&!GOAL){showToast("Please select a goal","err");return;}
+  if(from===1&&GOALS.length===0){showToast("Please select at least one goal","err");return;}
   if(from===2){
     if(!document.getElementById("oa").value||!document.getElementById("ow").value||!document.getElementById("oh").value||!document.getElementById("og").value){showToast("Please fill in all fields","err");return;}
   }
@@ -1224,7 +1266,7 @@ async function finishOb(){
   const hM=hCm/100;
   const bmi=wKg/(hM*hM);
   const{error}=await db.from("profiles").update({
-    goal:GOAL,age:parseInt(document.getElementById("oa").value),
+    goal:GOALS.join(","),age:parseInt(document.getElementById("oa").value),
     gender:document.getElementById("og").value,
     weight_kg:parseFloat(wKg.toFixed(1)),height_cm:parseFloat(hCm.toFixed(1)),
     bmi:parseFloat(bmi.toFixed(2)),activity_level:ACT
