@@ -1042,8 +1042,12 @@ async function loadAdmin(){
   const bmi=u.bmi?u.bmi.toFixed(1):"N/A";
   const goal=gm[u.goal]||"N/A";
   const joined=fmtShort(new Date(u.created_at));
+  const uid=u.id;
   const btns=showBtns&&u.status==="pending"
-    ?'<div class="auc-btns"><button class="btn-appr" onclick="setStatus(''+u.id+'','approved')">Approve</button><button class="btn-rej" onclick="setStatus(''+u.id+'','rejected')">Reject</button></div>'
+    ?["<div class='auc-btns'>",
+      "<button class='btn-appr' onclick=\"setStatus('"+uid+"','approved')\">Approve</button>",
+      "<button class='btn-rej' onclick=\"setStatus('"+uid+"','rejected')\">Reject</button>",
+      "</div>"].join("")
     :"";
   return '<div class="auc">'
     +'<div class="auc-top">'
