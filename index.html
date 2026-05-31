@@ -975,7 +975,7 @@ async function loadAdmin(){
     ${showBtns&&u.status==="pending"?`<div class="auc-btns"><button class="btn-appr" onclick="setStatus('${u.id}','approved')">Approve</button><button class="btn-rej" onclick="setStatus('${u.id}','rejected')">Reject</button></div>`:""}
   </div>`;
   document.getElementById("pendlist").innerHTML=pending.length?pending.map(u=>rUser(u,true)).join(""):"<div style=\"color:var(--t3);font-size:13px;padding:10px 0;\">No pending approvals.</div>";
-  document.getElementById("allusers").innerHTML=users.filter(u=>u.id!==U.id).map(u=>rUser(u,false)).join("");
+  document.getElementById("allusers").innerHTML=users.map(u=>rUser(u,u.status==="pending"&&u.id!==U.id)).join("");
 }
 
 async function setStatus(uid,status){
