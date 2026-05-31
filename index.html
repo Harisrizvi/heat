@@ -1229,9 +1229,9 @@ function calcBMI(){
   const ideal=getIdealWeight(hCm,gender);
   let extra="";
   if(ideal){
-    extra=" · Healthy range "+ideal.low+" to "+ideal.high+"kg (up to "+ideal.athletic+"kg if muscular)";
-  }
-  document.getElementById("bmi-c").textContent=cat+extra;
+    extra=cat+" · Ideal weight (Devine) "+ideal.devine+"kg. Healthy range "+ideal.low+"–"+ideal.high+"kg, up to "+ideal.athletic+"kg if you carry good muscle.";
+  }else{extra=cat;}
+  document.getElementById("bmi-c").textContent=extra;
 }
 
 function goStep(from,to){
@@ -1426,6 +1426,34 @@ function drawBG(){
 
 function initCanvas(){drawBG();}
 
+// ===== Auto-update: force newest build onto all users =====
+// Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
+const APP_VERSION = "2026.05.31.1";
+
+async function checkForUpdate(){
+  try{
+    // Cache-busting query string guarantees we never read a stale version.json
+    const res = await fetch("/version.json?t=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data && data.version && data.version !== APP_VERSION){
+      // A newer build exists. Clear caches and reload once.
+      if("caches" in window){
+        try{
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }catch(e){}
+      }
+      // Prevent reload loops: only reload if we haven't already this session
+      if(sessionStorage.getItem("ritual_updated_to") !== data.version){
+        sessionStorage.setItem("ritual_updated_to", data.version);
+        location.reload(true);
+      }
+    }
+  }catch(e){ /* offline or no version file yet — ignore */ }
+}
+
+checkForUpdate();
 init();
 </script>
 </body>
