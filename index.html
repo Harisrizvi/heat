@@ -993,19 +993,24 @@ async function renderStanding(){
   // Calories + water need today's totals from Supabase
   const tk=todayKey();
   try{
-    const{data:fl}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
+    const{data:fl,error:fe}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
+    if(fe)console.warn("dash food read error",fe);
     const eaten=(fl||[]).reduce((s,f)=>s+Number(f.calories),0);
     const target=P.cal_target||calcCalTarget();
     document.getElementById("st-cal").textContent=eaten+" / "+target;
     setArc("st-cal-arc",target?eaten/target:0);
-  }catch(e){document.getElementById("st-cal").textContent="—";}
+  }catch(e){console.warn("dash cal exception",e);document.getElementById("st-cal").textContent="—";}
   try{
-    const{data:wl}=await db.from("water_logs").select("glasses").eq("user_id",U.id).eq("log_date",tk).maybeSingle();
-    const ml=(wl?Number(wl.glasses):0)*250;
+    const{data:wrows,error:we}=await db.from("water_logs").select("glasses").eq("user_id",U.id).eq("log_date",tk);
+    if(we)console.warn("dash water read error",we);
+    // Use array form (not maybeSingle) so a stray duplicate row can't return null
+    const glasses=(wrows&&wrows.length)?Number(wrows[0].glasses):0;
+    const ml=glasses*250;
     const goal=P.water_goal_ml||calcWaterGoal();
+    console.log("DASH water:",{tk,uid:U.id,rows:wrows,glasses,ml,goal});
     document.getElementById("st-water").textContent=(ml/1000).toFixed(1)+" / "+(goal/1000).toFixed(1)+" L";
     setArc("st-water-arc",goal?ml/goal:0);
-  }catch(e){document.getElementById("st-water").textContent="—";}
+  }catch(e){console.warn("dash water exception",e);document.getElementById("st-water").textContent="—";}
 }
 
 function renderToday(td){
@@ -1148,7 +1153,11 @@ function calcCalTarget(){
   return Math.round(tdee/10)*10;
 }
 
-function todayKey(){return new Date().toISOString().slice(0,10);}
+function todayKey(){
+  const d=new Date();
+  // Local date (not UTC) so the day rolls over at local midnight, not UTC midnight
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 
 async function loadCalTracker(){
   // target: stored override, else calculated
@@ -1746,7 +1755,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.6";
+const APP_VERSION = "2026.05.31.7";
 
 async function checkForUpdate(){
   try{
