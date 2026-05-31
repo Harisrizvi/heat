@@ -35,6 +35,25 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 /* LOADER */
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
 .loader-ring{width:40px;height:40px;border:3px solid var(--s3);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;}
+.cal-ringwrap{position:relative;width:120px;height:120px;margin:8px auto 4px;}
+.cal-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.cal-eaten{font-family:Oswald,sans-serif;font-size:30px;font-weight:700;color:var(--acc);line-height:1;}
+.cal-of{font-size:11px;color:var(--t3);margin-top:2px;}
+.cal-meta{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--t2);margin:4px 2px 14px;}
+.cal-editbtn{background:none;border:none;color:var(--acc);font-size:12px;cursor:pointer;padding:0;}
+.cal-loginput{display:flex;flex-direction:column;gap:8px;position:relative;}
+.cal-row2{display:flex;gap:8px;}
+.cal-addbtn{background:var(--acc);color:var(--bg);border:none;border-radius:var(--rs);padding:0 18px;font-weight:700;cursor:pointer;font-size:14px;}
+.food-suggest{position:absolute;top:46px;left:0;right:0;background:var(--s2);border:1px solid var(--s4);border-radius:var(--rs);z-index:20;max-height:180px;overflow-y:auto;display:none;}
+.food-suggest.on{display:block;}
+.food-suggest-item{padding:10px 12px;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;border-bottom:1px solid var(--s3);}
+.food-suggest-item:hover{background:var(--s3);}
+.food-suggest-item .fs-cal{color:var(--t3);}
+.food-log{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+.food-log-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border-radius:var(--rs);padding:9px 12px;font-size:13px;}
+.food-log-item .fl-cal{color:var(--t2);margin-left:auto;margin-right:10px;}
+.food-log-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
+.cal-arc-over{stroke:var(--re)!important;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-text{font-family:Oswald,sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--t3);}
 
@@ -614,6 +633,27 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div class="bmi-ring"><div class="bmi-n" id="dbmin">0</div><div class="bmi-u">BMI</div></div>
       <div><div class="bmi-cat" id="dbmcat">Loading...</div><div class="bmi-desc" id="dbmdesc"></div></div>
     </div>
+    <div class="card reveal" id="cal-card">
+      <div class="card-lbl">Calories Today</div>
+      <div class="cal-ringwrap">
+        <svg class="cal-ring" viewBox="0 0 120 120" width="120" height="120">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--s3)" stroke-width="10"/>
+          <circle id="cal-arc" cx="60" cy="60" r="52" fill="none" stroke="var(--acc)" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .6s ease"/>
+        </svg>
+        <div class="cal-center"><div class="cal-eaten" id="cal-eaten">0</div><div class="cal-of">of <span id="cal-target">2000</span></div></div>
+      </div>
+      <div class="cal-meta"><span id="cal-left">2000 left</span><button class="cal-editbtn" onclick="editCalTarget()">Edit target</button></div>
+      <div class="cal-loginput">
+        <input type="text" class="finput" id="food-search" placeholder="Search or type a food..." oninput="onFoodSearch()" autocomplete="off">
+        <div id="food-suggest" class="food-suggest"></div>
+        <div class="cal-row2">
+          <input type="number" class="finput" id="food-cal" placeholder="Calories" style="flex:1">
+          <input type="number" class="finput" id="food-qty" placeholder="Qty" value="1" min="0.25" step="0.25" style="width:70px">
+          <button class="cal-addbtn" onclick="logFood()">Add</button>
+        </div>
+      </div>
+      <div id="food-log" class="food-log"></div>
+    </div>
     <div class="card reveal">
       <div class="card-lbl">AI Diet Plan</div>
       <div class="plan-box" id="dietplan">Generating your personalized plan...</div>
@@ -979,6 +1019,130 @@ async function toggleDay(i){
   renderHome();
 }
 
+// ===== Food / Calorie Tracker =====
+// Common foods incl. Pakistani dishes. cal = per typical serving.
+const FOOD_DB=[
+  {n:"Roti / Chapati",c:120},{n:"Naan",c:260},{n:"Paratha (plain)",c:280},
+  {n:"Chicken Biryani (1 plate)",c:600},{n:"Beef Biryani (1 plate)",c:680},
+  {n:"Chicken Karahi (1 serving)",c:450},{n:"Daal (1 bowl)",c:200},
+  {n:"Seekh Kebab (1 pc)",c:130},{n:"Chicken Tikka (1 pc)",c:200},
+  {n:"Chicken Boti (1 serving)",c:300},{n:"Nihari (1 bowl)",c:550},
+  {n:"Haleem (1 bowl)",c:380},{n:"Chicken Pulao (1 plate)",c:520},
+  {n:"Samosa (1 pc)",c:150},{n:"Pakora (4 pc)",c:220},{n:"Aloo Gosht (1 bowl)",c:400},
+  {n:"Boiled Egg",c:78},{n:"Fried Egg",c:90},{n:"Omelette (2 egg)",c:220},
+  {n:"Chai with sugar",c:120},{n:"Chai without sugar",c:40},{n:"Lassi (1 glass)",c:260},
+  {n:"Banana",c:105},{n:"Apple",c:95},{n:"Orange",c:62},{n:"Dates (3 pc)",c:60},
+  {n:"Almonds (10)",c:70},{n:"Yogurt (1 cup)",c:150},{n:"Milk (1 glass)",c:150},
+  {n:"White Rice (1 cup)",c:200},{n:"Chicken Breast (100g)",c:165},
+  {n:"BBQ Salad (United King)",c:350},{n:"Fruit Chaat (1 bowl)",c:180},
+  {n:"Chapli Kebab (1 pc)",c:280},{n:"Qeema (1 serving)",c:350},
+  {n:"Channa Chaat (1 bowl)",c:250},{n:"Halwa Puri (1 plate)",c:700}
+];
+let FOODLOG=[],CALTARGET=2000,foodPicked=null;
+
+function calcCalTarget(){
+  // Mifflin-St Jeor BMR x activity, adjusted for goal
+  const w=P.weight_kg||70,h=P.height_cm||170,a=P.age||30;
+  const male=(P.gender||"male")!=="female";
+  let bmr=10*w+6.25*h-5*a+(male?5:-161);
+  const mult={sedentary:1.2,light:1.375,moderate:1.55,very_active:1.725};
+  let tdee=bmr*(mult[P.activity_level]||1.2);
+  const goal=P.goal||"";
+  if(goal.includes("lose"))tdee-=400;        // deficit for fat loss
+  else if(goal.includes("muscle"))tdee+=250; // surplus for muscle
+  return Math.round(tdee/10)*10;
+}
+
+function todayKey(){return new Date().toISOString().slice(0,10);}
+
+async function loadCalTracker(){
+  // target: stored override, else calculated
+  CALTARGET = P.cal_target || calcCalTarget();
+  document.getElementById("cal-target").textContent=CALTARGET;
+  try{
+    const{data}=await db.from("food_logs").select("*").eq("user_id",U.id).eq("log_date",todayKey()).order("created_at",{ascending:true});
+    FOODLOG=data||[];
+  }catch(e){FOODLOG=[];}
+  renderFoodLog();
+}
+
+function renderFoodLog(){
+  const total=FOODLOG.reduce((s,f)=>s+Number(f.calories),0);
+  document.getElementById("cal-eaten").textContent=total;
+  document.getElementById("cal-target").textContent=CALTARGET;
+  const left=CALTARGET-total;
+  document.getElementById("cal-left").textContent=(left>=0?left+" left":Math.abs(left)+" over");
+  const arc=document.getElementById("cal-arc");
+  const frac=Math.min(1,total/CALTARGET);
+  arc.style.strokeDashoffset=326.7*(1-frac);
+  arc.classList.toggle("cal-arc-over",total>CALTARGET);
+  const log=document.getElementById("food-log");
+  if(FOODLOG.length===0){log.innerHTML='<div style="color:var(--t3);font-size:12px;text-align:center;padding:8px;">No food logged yet today.</div>';return;}
+  log.innerHTML=FOODLOG.map(f=>`<div class="food-log-item"><span>${escapeHtml(f.name)}${f.qty&&f.qty!=1?' ×'+f.qty:''}</span><span class="fl-cal">${f.calories} cal</span><button class="food-log-del" onclick="delFood('${f.id}')">✕</button></div>`).join("");
+}
+
+function escapeHtml(s){return(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+function onFoodSearch(){
+  const q=document.getElementById("food-search").value.trim().toLowerCase();
+  const box=document.getElementById("food-suggest");
+  foodPicked=null;
+  if(q.length<1){box.classList.remove("on");box.innerHTML="";return;}
+  const matches=FOOD_DB.filter(f=>f.n.toLowerCase().includes(q)).slice(0,6);
+  if(matches.length===0){box.classList.remove("on");box.innerHTML="";return;}
+  box.innerHTML=matches.map(f=>`<div class="food-suggest-item" onclick="pickFood('${escapeHtml(f.n).replace(/'/g,"\\'")}',${f.c})"><span>${escapeHtml(f.n)}</span><span class="fs-cal">${f.c} cal</span></div>`).join("");
+  box.classList.add("on");
+}
+
+function pickFood(name,cal){
+  document.getElementById("food-search").value=name;
+  document.getElementById("food-cal").value=cal;
+  document.getElementById("food-suggest").classList.remove("on");
+  foodPicked={name,cal};
+}
+
+async function logFood(){
+  const name=document.getElementById("food-search").value.trim();
+  const calPer=parseFloat(document.getElementById("food-cal").value);
+  const qty=parseFloat(document.getElementById("food-qty").value)||1;
+  if(!name){showToast("Enter a food name","err");return;}
+  if(!calPer||calPer<=0){showToast("Enter calories","err");return;}
+  const calories=Math.round(calPer*qty);
+  const row={user_id:U.id,log_date:todayKey(),name,calories,qty};
+  try{
+    const{data,error}=await db.from("food_logs").insert(row).select().single();
+    if(error)throw error;
+    FOODLOG.push(data);
+    renderFoodLog();
+    document.getElementById("food-search").value="";
+    document.getElementById("food-cal").value="";
+    document.getElementById("food-qty").value="1";
+    foodPicked=null;
+  }catch(e){showToast("Could not save: "+e.message,"err");}
+}
+
+async function delFood(id){
+  try{
+    await db.from("food_logs").delete().eq("id",id);
+    FOODLOG=FOODLOG.filter(f=>String(f.id)!==String(id));
+    renderFoodLog();
+  }catch(e){showToast("Could not delete","err");}
+}
+
+async function editCalTarget(){
+  const cur=CALTARGET;
+  const val=prompt("Set your daily calorie target:",cur);
+  if(val===null)return;
+  const n=parseInt(val,10);
+  if(!n||n<800||n>6000){showToast("Enter a value between 800 and 6000","err");return;}
+  CALTARGET=n;
+  renderFoodLog();
+  try{
+    await db.from("profiles").update({cal_target:n}).eq("id",U.id);
+    P.cal_target=n;
+  }catch(e){/* column may not exist yet; UI still updates */}
+}
+
 function renderDiet(){
   if(!P)return;
   const bmi=P.bmi||0;
@@ -991,6 +1155,7 @@ function renderDiet(){
     fullDesc=desc+" Your healthy weight range is "+ideal.low+" to "+ideal.high+"kg, or up to "+ideal.athletic+"kg if you carry good muscle.";
   }
   document.getElementById("dbmdesc").textContent=fullDesc;
+  loadCalTracker();
   loadDietPlan();
   const meals=[
     {t:"Morning",n:"Breakfast",d:"2 boiled eggs + 1 roti + chai without sugar."},
@@ -1428,7 +1593,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.1";
+const APP_VERSION = "2026.05.31.2";
 
 async function checkForUpdate(){
   try{
