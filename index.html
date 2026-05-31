@@ -1332,7 +1332,9 @@ function showScreen(name){
 function showPage(name){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".bni").forEach(b=>b.classList.remove("on"));
-  document.getElementById("page-"+name).classList.add("active");
+  const pg=document.getElementById("page-"+name);
+  pg.classList.remove("hidden");
+  pg.classList.add("active");
   const bmap={home:0,diet:1,habits:2,profile:3,admin:4};
   const btns=document.querySelectorAll(".bni");
   if(bmap[name]!==undefined)btns[bmap[name]]?.classList.add("on");
