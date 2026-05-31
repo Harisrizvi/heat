@@ -1655,6 +1655,7 @@ function showPage(name){
   const bmap={home:0,diet:1,habits:2,profile:3,admin:4};
   const btns=document.querySelectorAll(".bni");
   if(bmap[name]!==undefined)btns[bmap[name]]?.classList.add("on");
+  if(name==="home")renderStanding();
   if(name==="habits"){loadHabs().then(renderHabs);}
   if(name==="admin")loadAdmin();
   if(name==="profile")renderProfPage();
@@ -1745,7 +1746,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.5";
+const APP_VERSION = "2026.05.31.6";
 
 async function checkForUpdate(){
   try{
