@@ -76,6 +76,18 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .stile-info{min-width:0;}
 .stile-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
 .stile-val{font-size:14px;font-weight:600;color:var(--t1);white-space:nowrap;}
+.wt-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.wt-stat{background:var(--s2);border-radius:var(--rs);padding:10px;text-align:center;}
+.wt-stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.wt-stat-val{font-family:Oswald,sans-serif;font-size:19px;font-weight:700;color:var(--t1);}
+.wt-stat-val.down{color:var(--acc);}
+.wt-stat-val.up{color:var(--am);}
+.wt-chartwrap{background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;height:150px;}
+.wt-chartwrap svg{width:100%;height:100%;overflow:visible;}
+.wt-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:12px;text-align:center;}
+.wt-log{display:flex;gap:8px;}
+.wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
+.wt-reminder:empty{display:none;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-text{font-family:Oswald,sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--t3);}
 
@@ -638,6 +650,10 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
           <div class="stile-ring stile-streak"><span id="st-streak-n">0</span></div>
           <div class="stile-info"><div class="stile-lbl">Streak</div><div class="stile-val" id="st-streak">0 days</div></div>
         </div>
+        <div class="stile" onclick="showPage('profile')">
+          <div class="stile-ring stile-streak" style="border-color:#60a5fa;color:#60a5fa;font-size:15px;"><span id="st-weight-n">—</span></div>
+          <div class="stile-info"><div class="stile-lbl">Weight</div><div class="stile-val" id="st-weight">No data</div></div>
+        </div>
       </div>
     </div>
     <div class="stats-row reveal">
@@ -761,6 +777,16 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div><div class="prof-name" id="pname">Loading...</div><div class="prof-email" id="pemail"></div><div class="prof-badge">Approved Member</div></div>
     </div>
     <div class="card reveal"><div class="card-lbl">Body Stats</div><div class="info-grid" id="pstats"></div></div>
+    <div class="card reveal" id="weight-card">
+      <div class="card-lbl">Weight Progress</div>
+      <div class="wt-stats" id="wt-stats"></div>
+      <div class="wt-chartwrap"><svg id="wt-chart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg></div>
+      <div class="wt-log">
+        <input type="number" class="finput" id="wt-input" placeholder="Today's weight (kg)" step="0.1" min="20" max="400" style="flex:1">
+        <button class="cal-addbtn" onclick="logWeight()">Log</button>
+      </div>
+      <div id="wt-reminder" class="wt-reminder"></div>
+    </div>
     <div class="card reveal"><div class="card-lbl">Goal and Activity</div><div class="info-grid" id="pgoal"></div></div>
     <div class="card reveal"><div class="card-lbl">Account</div><button class="btn-danger" onclick="doLogout()">Sign Out</button></div>
   </div>
@@ -1020,6 +1046,19 @@ async function renderStanding(){
     document.getElementById("st-water").textContent=(ml/1000).toFixed(1)+" / "+(goal/1000).toFixed(1)+" L";
     setArc("st-water-arc",goal?ml/goal:0);
   }catch(e){console.warn("dash water exception",e);document.getElementById("st-water").textContent="—";}
+  // Weight: latest entry + change
+  try{
+    const{data:wt}=await db.from("weight_logs").select("weight_kg").eq("user_id",U.id).order("log_date",{ascending:true});
+    const wEl=document.getElementById("st-weight"),wN=document.getElementById("st-weight-n");
+    if(wt&&wt.length){
+      const cur=Number(wt[wt.length-1].weight_kg);
+      wN.textContent=Math.round(cur);
+      if(wt.length>=2){
+        const ch=+(cur-Number(wt[0].weight_kg)).toFixed(1);
+        wEl.textContent=(ch>0?"+":"")+ch+" kg";
+      }else{wEl.textContent=cur+" kg";}
+    }else if(wN&&P&&P.weight_kg){wN.textContent=Math.round(P.weight_kg);wEl.textContent=P.weight_kg+" kg";}
+  }catch(e){console.warn("dash weight exception",e);}
 }
 
 function renderToday(td){
@@ -1414,6 +1453,103 @@ function renderProfPage(){
     <div class="info-item"><div class="info-lbl">Activity</div><div class="info-val">${am[P.activity_level]||"N/A"}</div></div>
     <div class="info-item"><div class="info-lbl">Start Date</div><div class="info-val">${P.start_date?fmtDate(new Date(P.start_date)):"Not started"}</div></div>
     <div class="info-item"><div class="info-lbl">Days Done</div><div class="info-val" style="color:var(--acc)">${getDone()}</div></div>`;
+  loadWeight();
+}
+
+// ===== Weight Tracking =====
+let WEIGHTS=[];
+
+async function loadWeight(){
+  try{
+    const{data}=await db.from("weight_logs").select("log_date,weight_kg").eq("user_id",U.id).order("log_date",{ascending:true});
+    WEIGHTS=data||[];
+  }catch(e){WEIGHTS=[];}
+  const inp=document.getElementById("wt-input");
+  if(inp&&P&&P.weight_kg)inp.placeholder="Today's weight (last: "+P.weight_kg+" kg)";
+  renderWeight();
+}
+
+function renderWeight(){
+  renderWeightStats();
+  renderWeightChart();
+  renderWeightReminder();
+}
+
+function renderWeightStats(){
+  const el=document.getElementById("wt-stats");
+  if(!el)return;
+  if(WEIGHTS.length===0){
+    const start=P&&P.weight_kg?P.weight_kg:0;
+    el.innerHTML=`<div class="wt-stat"><div class="wt-stat-lbl">Start</div><div class="wt-stat-val">${start||"—"}</div></div>
+      <div class="wt-stat"><div class="wt-stat-lbl">Current</div><div class="wt-stat-val">${start||"—"}</div></div>
+      <div class="wt-stat"><div class="wt-stat-lbl">Change</div><div class="wt-stat-val">—</div></div>`;
+    return;
+  }
+  const start=Number(WEIGHTS[0].weight_kg);
+  const current=Number(WEIGHTS[WEIGHTS.length-1].weight_kg);
+  const change=+(current-start).toFixed(1);
+  const cls=change<0?"down":(change>0?"up":"");
+  const sign=change>0?"+":"";
+  el.innerHTML=`<div class="wt-stat"><div class="wt-stat-lbl">Start</div><div class="wt-stat-val">${start}</div></div>
+    <div class="wt-stat"><div class="wt-stat-lbl">Current</div><div class="wt-stat-val">${current}</div></div>
+    <div class="wt-stat"><div class="wt-stat-lbl">Change</div><div class="wt-stat-val ${cls}">${sign}${change} kg</div></div>`;
+}
+
+function renderWeightChart(){
+  const svg=document.getElementById("wt-chart");
+  if(!svg)return;
+  if(WEIGHTS.length<2){
+    svg.innerHTML=`<foreignObject x="0" y="0" width="320" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="wt-empty">Log your weight at least twice to see your trend line.</div></foreignObject>`;
+    return;
+  }
+  const W=320,H=140,padL=8,padR=8,padT=12,padB=18;
+  const vals=WEIGHTS.map(w=>Number(w.weight_kg));
+  let min=Math.min(...vals),max=Math.max(...vals);
+  if(min===max){min-=1;max+=1;}
+  const range=max-min;
+  const n=WEIGHTS.length;
+  const x=i=>padL+(i/(n-1))*(W-padL-padR);
+  const y=v=>padT+(1-(v-min)/range)*(H-padT-padB);
+  const pts=WEIGHTS.map((w,i)=>`${x(i).toFixed(1)},${y(Number(w.weight_kg)).toFixed(1)}`).join(" ");
+  const area=`${padL},${H-padB} ${pts} ${(W-padR)},${H-padB}`;
+  const dots=WEIGHTS.map((w,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(Number(w.weight_kg)).toFixed(1)}" r="2.5" fill="var(--acc)"/>`).join("");
+  svg.innerHTML=`
+    <polygon points="${area}" fill="var(--acc)" opacity="0.08"/>
+    <polyline points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+    <text x="${padL}" y="10" font-size="9" fill="var(--t3)">${max.toFixed(1)}</text>
+    <text x="${padL}" y="${H-padB+12}" font-size="9" fill="var(--t3)">${min.toFixed(1)}</text>`;
+}
+
+function renderWeightReminder(){
+  const el=document.getElementById("wt-reminder");
+  if(!el)return;
+  if(WEIGHTS.length===0){el.textContent="";return;}
+  const last=WEIGHTS[WEIGHTS.length-1].log_date;
+  const days=Math.floor((Date.now()-new Date(last).getTime())/86400000);
+  el.textContent = days>=7 ? ("It's been "+days+" days since your last weigh-in. Time to log again!") : "";
+}
+
+async function logWeight(){
+  const inp=document.getElementById("wt-input");
+  const v=parseFloat(inp.value);
+  if(!v||v<20||v>400){showToast("Enter a valid weight (20-400 kg)","err");return;}
+  const tk=todayKey();
+  try{
+    const{error}=await db.from("weight_logs").upsert(
+      {user_id:U.id,log_date:tk,weight_kg:v},
+      {onConflict:"user_id,log_date"}
+    );
+    if(error)throw error;
+    const hM=(P.height_cm||170)/100;
+    const newBmi=+(v/(hM*hM)).toFixed(2);
+    await db.from("profiles").update({weight_kg:v,bmi:newBmi}).eq("id",U.id);
+    P.weight_kg=v;P.bmi=newBmi;
+    inp.value="";
+    await loadWeight();
+    renderProfPage();
+    showToast("Weight logged!","ok");
+  }catch(e){showToast("Could not save: "+e.message,"err");}
 }
 
 async function loadAdmin(){
@@ -1764,7 +1900,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.8";
+const APP_VERSION = "2026.05.31.9";
 
 async function checkForUpdate(){
   try{
