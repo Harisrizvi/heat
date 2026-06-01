@@ -84,19 +84,37 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wt-stat-val.up{color:var(--am);}
 .wt-chartwrap{background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;height:150px;}
 .wt-chartwrap svg{width:100%;height:100%;overflow:visible;}
-.wt-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:12px;text-align:center;}
+.wt-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:var(--t3);font-size:12px;text-align:center;padding:0 20px;}
+.wt-empty-icon{width:30px;height:30px;opacity:.4;}
+.wt-empty-txt{font-style:normal;line-height:1.4;max-width:200px;}
+@keyframes wtDraw{from{stroke-dashoffset:var(--len);}to{stroke-dashoffset:0;}}
+.wt-line-anim{animation:wtDraw 1s ease forwards;}
 .wt-log{display:flex;gap:8px;}
 .wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
 .wt-reminder:empty{display:none;}
 .histwk{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
-.histwk-hd{display:flex;align-items:baseline;justify-content:space-between;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:12px;}
+.histwk-hd{display:flex;align-items:center;justify-content:space-between;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
+.histwk-nav{display:flex;align-items:center;gap:10px;}
+.histwk-arrow{background:var(--s3);border:none;color:var(--t1);width:26px;height:26px;border-radius:7px;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.histwk-arrow:disabled{opacity:.3;cursor:default;}
+.histwk-arrow:active{transform:scale(.9);}
+.histwk-pickbtn{background:none;border:1px solid var(--s4);color:var(--t2);font-size:11px;border-radius:7px;padding:5px 9px;cursor:pointer;letter-spacing:0;}
+.histwk-range-lbl{margin-bottom:12px;}
+.histwk-picker{display:none;background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;}
+.histwk-picker.on{display:block;}
+.histwk-picker-row{display:flex;gap:10px;margin-bottom:10px;}
+.histwk-picker-row label{flex:1;font-size:11px;color:var(--t3);display:flex;flex-direction:column;gap:4px;}
+.histwk-picker-row input{color-scheme:dark;}
+.histwk-picker-actions{display:flex;gap:8px;}
+.histwk-apply{flex:1;background:var(--acc);color:var(--bg);border:none;border-radius:var(--rs);padding:8px;font-weight:700;cursor:pointer;}
+.histwk-cancel{background:var(--s3);color:var(--t1);border:none;border-radius:var(--rs);padding:8px 16px;cursor:pointer;}
 .histwk-sub{font-size:11px;color:var(--t3);letter-spacing:0;text-transform:none;}
 .histwk-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
 .histwk-sumitem{background:var(--s2);border-radius:var(--rs);padding:9px;text-align:center;}
 .histwk-sumlbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
 .histwk-sumval{font-family:Oswald,sans-serif;font-size:17px;font-weight:700;color:var(--t1);margin-top:2px;}
-.histwk-days{display:flex;gap:6px;}
-.histwk-day{flex:1;background:var(--s2);border-radius:var(--rs);padding:8px 4px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s;}
+.histwk-days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.histwk-day{flex:1 0 auto;min-width:42px;background:var(--s2);border-radius:var(--rs);padding:8px 4px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s;}
 .histwk-day.sel{border-color:var(--acc);}
 .histwk-day.today{background:var(--s3);}
 .histwk-dname{font-size:10px;color:var(--t3);text-transform:uppercase;}
@@ -680,8 +698,23 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     </div>
     <div class="histwk reveal" id="histwk-card">
       <div class="histwk-hd">
-        <span>This Week</span>
-        <span class="histwk-sub" id="histwk-range"></span>
+        <div class="histwk-nav">
+          <button class="histwk-arrow" id="histwk-prev" onclick="histShiftWeek(-1)">‹</button>
+          <span id="histwk-title">This Week</span>
+          <button class="histwk-arrow" id="histwk-next" onclick="histShiftWeek(1)">›</button>
+        </div>
+        <button class="histwk-pickbtn" onclick="histTogglePicker()">📅 Range</button>
+      </div>
+      <div class="histwk-range-lbl histwk-sub" id="histwk-range"></div>
+      <div class="histwk-picker" id="histwk-picker">
+        <div class="histwk-picker-row">
+          <label>From <input type="date" id="hist-from" class="finput"></label>
+          <label>To <input type="date" id="hist-to" class="finput"></label>
+        </div>
+        <div class="histwk-picker-actions">
+          <button class="histwk-apply" onclick="histApplyRange()">Apply</button>
+          <button class="histwk-cancel" onclick="histTogglePicker()">Cancel</button>
+        </div>
       </div>
       <div class="histwk-summary" id="histwk-summary"></div>
       <div class="histwk-days" id="histwk-days"></div>
@@ -1093,32 +1126,55 @@ async function renderStanding(){
   loadHistWeek();
 }
 
-// ===== History: This Week + tap any past day =====
-let HISTDAYS=[]; // [{key, dayName, isToday, cal, water, habDone, habTotal}]
+// ===== History: Mon–Sun weeks with nav + custom range =====
+let HISTDAYS=[];
+let HIST_WEEK_OFFSET=0;   // 0 = current week, -1 = last week, etc.
+let HIST_CUSTOM=null;     // {from, to} when a custom range is active
+
+function startOfWeekMonday(d){
+  // Returns the Monday of the week containing date d (local)
+  const x=new Date(d);
+  const day=x.getDay();              // 0=Sun..6=Sat
+  const diff=(day===0?-6:1-day);     // shift back to Monday
+  x.setDate(x.getDate()+diff);
+  x.setHours(0,0,0,0);
+  return x;
+}
+
+function histRangeDays(){
+  // Produce the list of {date,key} for the active range
+  if(HIST_CUSTOM){
+    const out=[];
+    const cur=new Date(HIST_CUSTOM.from);
+    const end=new Date(HIST_CUSTOM.to);
+    let guard=0;
+    while(cur<=end&&guard<366){out.push({date:new Date(cur),key:dateKey(cur)});cur.setDate(cur.getDate()+1);guard++;}
+    return out;
+  }
+  // Mon–Sun week, shifted by HIST_WEEK_OFFSET
+  const mon=startOfWeekMonday(new Date());
+  mon.setDate(mon.getDate()+HIST_WEEK_OFFSET*7);
+  const out=[];
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);out.push({date:d,key:dateKey(d)});}
+  return out;
+}
 
 async function loadHistWeek(){
   if(!P||!U)return;
-  // Build the last 7 day keys (local), oldest -> newest
-  const days=[];
-  for(let i=6;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    days.push({date:new Date(d),key:dateKey(d)});
-  }
-  const oldest=days[0].key;
+  const days=histRangeDays();
+  const oldest=days[0].key, newest=days[days.length-1].key;
   const calTarget=P.cal_target||calcCalTarget();
   const waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250);
   const habTotal=(typeof HABITS!=="undefined"&&HABITS.length)?HABITS.length:0;
-  // Fetch all three in parallel, only rows in the last 7 days
   let foods=[],waters=[],habs=[];
   try{
     const[f,w,h]=await Promise.all([
-      db.from("food_logs").select("log_date,calories").eq("user_id",U.id).gte("log_date",oldest),
-      db.from("water_logs").select("log_date,glasses").eq("user_id",U.id).gte("log_date",oldest),
-      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest)
+      db.from("food_logs").select("log_date,calories").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
+      db.from("water_logs").select("log_date,glasses").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
+      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest).lte("date",newest)
     ]);
     foods=f.data||[];waters=w.data||[];habs=h.data||[];
   }catch(e){console.warn("histweek fetch",e);}
-  // Aggregate per day
   const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const tk=todayKey();
   HISTDAYS=days.map(d=>{
@@ -1127,21 +1183,32 @@ async function loadHistWeek(){
     const glasses=wrow?Number(wrow.glasses):0;
     const habDone=habs.filter(x=>x.date===d.key&&x.completed).length;
     return{
-      key:d.key,dayName:dn[d.date.getDay()],isToday:d.key===tk,
-      cal,glasses,water:+(glasses*250/1000).toFixed(1),
-      habDone,habTotal,
-      hitCal:calTarget&&cal>0&&cal<=calTarget,
-      hitWater:glasses>=waterGoalGlasses&&glasses>0,
+      key:d.key,dayName:dn[d.date.getDay()],dateObj:d.date,isToday:d.key===tk,
+      cal,glasses,water:+(glasses*250/1000).toFixed(1),habDone,habTotal,
       hitHab:habTotal>0&&habDone>=habTotal
     };
   });
-  renderHistWeek(calTarget,waterGoalGlasses);
+  renderHistWeek();
 }
 
-function renderHistWeek(calTarget,waterGoalGlasses){
+function fmtShort(d){const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return m[d.getMonth()]+" "+d.getDate();}
+
+function renderHistWeek(){
+  // Title + range label + arrow states
+  const titleEl=document.getElementById("histwk-title");
   const rangeEl=document.getElementById("histwk-range");
-  if(rangeEl&&HISTDAYS.length)rangeEl.textContent=HISTDAYS[0].dayName+" – "+HISTDAYS[HISTDAYS.length-1].dayName;
-  // Weekly summary: avg calories (over days with any log), total water, habit days hit
+  const nextBtn=document.getElementById("histwk-next");
+  if(HIST_CUSTOM){
+    titleEl.textContent="Custom";
+    nextBtn.disabled=true;
+  }else{
+    titleEl.textContent = HIST_WEEK_OFFSET===0?"This Week":(HIST_WEEK_OFFSET===-1?"Last Week":Math.abs(HIST_WEEK_OFFSET)+" Weeks Ago");
+    nextBtn.disabled = HIST_WEEK_OFFSET>=0; // can't go into the future
+  }
+  if(HISTDAYS.length){
+    rangeEl.textContent=fmtShort(HISTDAYS[0].dateObj)+" – "+fmtShort(HISTDAYS[HISTDAYS.length-1].dateObj);
+  }
+  // Summary
   const loggedCalDays=HISTDAYS.filter(d=>d.cal>0);
   const avgCal=loggedCalDays.length?Math.round(loggedCalDays.reduce((s,d)=>s+d.cal,0)/loggedCalDays.length):0;
   const totalWater=+(HISTDAYS.reduce((s,d)=>s+d.water,0)).toFixed(1);
@@ -1149,7 +1216,7 @@ function renderHistWeek(calTarget,waterGoalGlasses){
   document.getElementById("histwk-summary").innerHTML=
     `<div class="histwk-sumitem"><div class="histwk-sumlbl">Avg Cal</div><div class="histwk-sumval">${avgCal||"—"}</div></div>
      <div class="histwk-sumitem"><div class="histwk-sumlbl">Total Water</div><div class="histwk-sumval">${totalWater} L</div></div>
-     <div class="histwk-sumitem"><div class="histwk-sumlbl">Habit Days</div><div class="histwk-sumval">${habDaysHit}/7</div></div>`;
+     <div class="histwk-sumitem"><div class="histwk-sumlbl">Habit Days</div><div class="histwk-sumval">${habDaysHit}/${HISTDAYS.length}</div></div>`;
   document.getElementById("histwk-days").innerHTML=HISTDAYS.map((d,i)=>
     `<div class="histwk-day${d.isToday?' today':''}" onclick="showHistDay(${i})">
       <div class="histwk-dname">${d.dayName}</div>
@@ -1160,6 +1227,36 @@ function renderHistWeek(calTarget,waterGoalGlasses){
       </div>
     </div>`).join("");
   document.getElementById("histwk-detail").innerHTML="";
+}
+
+function histShiftWeek(dir){
+  HIST_CUSTOM=null;
+  HIST_WEEK_OFFSET+=dir;
+  if(HIST_WEEK_OFFSET>0)HIST_WEEK_OFFSET=0; // never future
+  loadHistWeek();
+}
+
+function histTogglePicker(){
+  const p=document.getElementById("histwk-picker");
+  p.classList.toggle("on");
+  // pre-fill with current range
+  if(p.classList.contains("on")&&HISTDAYS.length){
+    document.getElementById("hist-from").value=HISTDAYS[0].key;
+    document.getElementById("hist-to").value=HISTDAYS[HISTDAYS.length-1].key;
+  }
+}
+
+function histApplyRange(){
+  const from=document.getElementById("hist-from").value;
+  const to=document.getElementById("hist-to").value;
+  if(!from||!to){showToast("Pick both dates","err");return;}
+  if(from>to){showToast("From date must be before To date","err");return;}
+  const fromD=new Date(from),toD=new Date(to);
+  const span=Math.round((toD-fromD)/86400000)+1;
+  if(span>62){showToast("Please pick a range of 62 days or less","err");return;}
+  HIST_CUSTOM={from:fromD,to:toD};
+  document.getElementById("histwk-picker").classList.remove("on");
+  loadHistWeek();
 }
 
 function showHistDay(i){
@@ -1615,7 +1712,12 @@ function renderWeightChart(){
   const svg=document.getElementById("wt-chart");
   if(!svg)return;
   if(WEIGHTS.length<2){
-    svg.innerHTML=`<foreignObject x="0" y="0" width="320" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="wt-empty">Log your weight at least twice to see your trend line.</div></foreignObject>`;
+    const msg=WEIGHTS.length===0
+      ? "Log your weight to start tracking your progress."
+      : "One more weigh-in and your trend line appears.";
+    svg.innerHTML=`<foreignObject x="0" y="0" width="320" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="wt-empty">
+      <svg class="wt-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+      <div class="wt-empty-txt">${msg}</div></div></foreignObject>`;
     return;
   }
   const W=320,H=140,padL=8,padR=8,padT=12,padB=18;
@@ -1626,12 +1728,15 @@ function renderWeightChart(){
   const n=WEIGHTS.length;
   const x=i=>padL+(i/(n-1))*(W-padL-padR);
   const y=v=>padT+(1-(v-min)/range)*(H-padT-padB);
-  const pts=WEIGHTS.map((w,i)=>`${x(i).toFixed(1)},${y(Number(w.weight_kg)).toFixed(1)}`).join(" ");
+  const ptArr=WEIGHTS.map((w,i)=>[x(i),y(Number(w.weight_kg))]);
+  const pts=ptArr.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const area=`${padL},${H-padB} ${pts} ${(W-padR)},${H-padB}`;
-  const dots=WEIGHTS.map((w,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(Number(w.weight_kg)).toFixed(1)}" r="2.5" fill="var(--acc)"/>`).join("");
+  const dots=ptArr.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5" fill="var(--acc)"/>`).join("");
+  // approximate polyline length for the draw-in animation
+  let len=0;for(let i=1;i<ptArr.length;i++){len+=Math.hypot(ptArr[i][0]-ptArr[i-1][0],ptArr[i][1]-ptArr[i-1][1]);}
   svg.innerHTML=`
     <polygon points="${area}" fill="var(--acc)" opacity="0.08"/>
-    <polyline points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <polyline class="wt-line-anim" style="--len:${len.toFixed(0)};stroke-dasharray:${len.toFixed(0)};" points="${pts}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
     ${dots}
     <text x="${padL}" y="10" font-size="9" fill="var(--t3)">${max.toFixed(1)}</text>
     <text x="${padL}" y="${H-padB+12}" font-size="9" fill="var(--t3)">${min.toFixed(1)}</text>`;
@@ -2016,7 +2121,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.01.1";
+const APP_VERSION = "2026.06.01.2";
 
 async function checkForUpdate(){
   try{
