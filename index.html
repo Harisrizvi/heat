@@ -88,6 +88,28 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wt-log{display:flex;gap:8px;}
 .wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
 .wt-reminder:empty{display:none;}
+.histwk{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
+.histwk-hd{display:flex;align-items:baseline;justify-content:space-between;font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:12px;}
+.histwk-sub{font-size:11px;color:var(--t3);letter-spacing:0;text-transform:none;}
+.histwk-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.histwk-sumitem{background:var(--s2);border-radius:var(--rs);padding:9px;text-align:center;}
+.histwk-sumlbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.histwk-sumval{font-family:Oswald,sans-serif;font-size:17px;font-weight:700;color:var(--t1);margin-top:2px;}
+.histwk-days{display:flex;gap:6px;}
+.histwk-day{flex:1;background:var(--s2);border-radius:var(--rs);padding:8px 4px;text-align:center;cursor:pointer;border:1.5px solid transparent;transition:border-color .15s;}
+.histwk-day.sel{border-color:var(--acc);}
+.histwk-day.today{background:var(--s3);}
+.histwk-dname{font-size:10px;color:var(--t3);text-transform:uppercase;}
+.histwk-dots{display:flex;justify-content:center;gap:2px;margin-top:5px;height:6px;}
+.histwk-dot{width:5px;height:5px;border-radius:50%;background:var(--s4);}
+.histwk-dot.cal{background:var(--acc);}
+.histwk-dot.water{background:#60a5fa;}
+.histwk-dot.hab{background:#3dd68c;}
+.histwk-detail{margin-top:12px;}
+.histwk-detail:empty{display:none;}
+.histwk-detail-card{background:var(--s2);border-radius:var(--rs);padding:12px;font-size:13px;}
+.histwk-detail-date{font-weight:600;margin-bottom:8px;color:var(--t1);}
+.histwk-detail-row{display:flex;justify-content:space-between;padding:5px 0;color:var(--t2);border-top:1px solid var(--s3);}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loader-text{font-family:Oswald,sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--t3);}
 
@@ -656,6 +678,15 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
     </div>
+    <div class="histwk reveal" id="histwk-card">
+      <div class="histwk-hd">
+        <span>This Week</span>
+        <span class="histwk-sub" id="histwk-range"></span>
+      </div>
+      <div class="histwk-summary" id="histwk-summary"></div>
+      <div class="histwk-days" id="histwk-days"></div>
+      <div class="histwk-detail" id="histwk-detail"></div>
+    </div>
     <div class="stats-row reveal">
       <div class="sc"><div class="sc-lbl">Done</div><div class="sc-val acc" id="svd">0</div><div class="sc-sub">of 40 days</div></div>
       <div class="sc"><div class="sc-lbl">Streak</div><div class="sc-val" id="svs">0</div><div class="sc-sub">days in a row</div></div>
@@ -992,7 +1023,7 @@ async function loadProg(){
 async function loadHabs(){
   const{data:habs}=await db.from("habits").select("*").eq("user_id",U.id);
   HABITS=habs||[];
-  const today=new Date().toISOString().split("T")[0];
+  const today=todayKey();
   if(HABITS.length){
     const{data:logs}=await db.from("habit_logs").select("*").eq("user_id",U.id).eq("date",today);
     HLOGS={};
@@ -1059,6 +1090,88 @@ async function renderStanding(){
       }else{wEl.textContent=cur+" kg";}
     }else if(wN&&P&&P.weight_kg){wN.textContent=Math.round(P.weight_kg);wEl.textContent=P.weight_kg+" kg";}
   }catch(e){console.warn("dash weight exception",e);}
+  loadHistWeek();
+}
+
+// ===== History: This Week + tap any past day =====
+let HISTDAYS=[]; // [{key, dayName, isToday, cal, water, habDone, habTotal}]
+
+async function loadHistWeek(){
+  if(!P||!U)return;
+  // Build the last 7 day keys (local), oldest -> newest
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    days.push({date:new Date(d),key:dateKey(d)});
+  }
+  const oldest=days[0].key;
+  const calTarget=P.cal_target||calcCalTarget();
+  const waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250);
+  const habTotal=(typeof HABITS!=="undefined"&&HABITS.length)?HABITS.length:0;
+  // Fetch all three in parallel, only rows in the last 7 days
+  let foods=[],waters=[],habs=[];
+  try{
+    const[f,w,h]=await Promise.all([
+      db.from("food_logs").select("log_date,calories").eq("user_id",U.id).gte("log_date",oldest),
+      db.from("water_logs").select("log_date,glasses").eq("user_id",U.id).gte("log_date",oldest),
+      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest)
+    ]);
+    foods=f.data||[];waters=w.data||[];habs=h.data||[];
+  }catch(e){console.warn("histweek fetch",e);}
+  // Aggregate per day
+  const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const tk=todayKey();
+  HISTDAYS=days.map(d=>{
+    const cal=foods.filter(x=>x.log_date===d.key).reduce((s,x)=>s+Number(x.calories),0);
+    const wrow=waters.find(x=>x.log_date===d.key);
+    const glasses=wrow?Number(wrow.glasses):0;
+    const habDone=habs.filter(x=>x.date===d.key&&x.completed).length;
+    return{
+      key:d.key,dayName:dn[d.date.getDay()],isToday:d.key===tk,
+      cal,glasses,water:+(glasses*250/1000).toFixed(1),
+      habDone,habTotal,
+      hitCal:calTarget&&cal>0&&cal<=calTarget,
+      hitWater:glasses>=waterGoalGlasses&&glasses>0,
+      hitHab:habTotal>0&&habDone>=habTotal
+    };
+  });
+  renderHistWeek(calTarget,waterGoalGlasses);
+}
+
+function renderHistWeek(calTarget,waterGoalGlasses){
+  const rangeEl=document.getElementById("histwk-range");
+  if(rangeEl&&HISTDAYS.length)rangeEl.textContent=HISTDAYS[0].dayName+" – "+HISTDAYS[HISTDAYS.length-1].dayName;
+  // Weekly summary: avg calories (over days with any log), total water, habit days hit
+  const loggedCalDays=HISTDAYS.filter(d=>d.cal>0);
+  const avgCal=loggedCalDays.length?Math.round(loggedCalDays.reduce((s,d)=>s+d.cal,0)/loggedCalDays.length):0;
+  const totalWater=+(HISTDAYS.reduce((s,d)=>s+d.water,0)).toFixed(1);
+  const habDaysHit=HISTDAYS.filter(d=>d.hitHab).length;
+  document.getElementById("histwk-summary").innerHTML=
+    `<div class="histwk-sumitem"><div class="histwk-sumlbl">Avg Cal</div><div class="histwk-sumval">${avgCal||"—"}</div></div>
+     <div class="histwk-sumitem"><div class="histwk-sumlbl">Total Water</div><div class="histwk-sumval">${totalWater} L</div></div>
+     <div class="histwk-sumitem"><div class="histwk-sumlbl">Habit Days</div><div class="histwk-sumval">${habDaysHit}/7</div></div>`;
+  document.getElementById("histwk-days").innerHTML=HISTDAYS.map((d,i)=>
+    `<div class="histwk-day${d.isToday?' today':''}" onclick="showHistDay(${i})">
+      <div class="histwk-dname">${d.dayName}</div>
+      <div class="histwk-dots">
+        <div class="histwk-dot${d.cal>0?' cal':''}"></div>
+        <div class="histwk-dot${d.glasses>0?' water':''}"></div>
+        <div class="histwk-dot${d.habDone>0?' hab':''}"></div>
+      </div>
+    </div>`).join("");
+  document.getElementById("histwk-detail").innerHTML="";
+}
+
+function showHistDay(i){
+  const d=HISTDAYS[i];if(!d)return;
+  document.querySelectorAll(".histwk-day").forEach((el,idx)=>el.classList.toggle("sel",idx===i));
+  document.getElementById("histwk-detail").innerHTML=
+    `<div class="histwk-detail-card">
+      <div class="histwk-detail-date">${d.dayName}${d.isToday?" (Today)":""}</div>
+      <div class="histwk-detail-row"><span>Calories</span><span>${d.cal>0?d.cal+" cal":"Not logged"}</span></div>
+      <div class="histwk-detail-row"><span>Water</span><span>${d.glasses>0?d.water+" L ("+d.glasses+" glasses)":"Not logged"}</span></div>
+      <div class="histwk-detail-row"><span>Habits</span><span>${d.habTotal>0?d.habDone+" / "+d.habTotal:"None set"}</span></div>
+    </div>`;
 }
 
 function renderToday(td){
@@ -1143,7 +1256,7 @@ function renderCards(td){
 async function checkToday(){
   const td=getTD();if(td<1||td>40)return;
   if(!SD){
-    const today=new Date().toISOString().split("T")[0];SD=today;
+    const today=todayKey();SD=today;
     await db.from("profiles").update({start_date:today}).eq("id",U.id);P.start_date=today;
   }
   await toggleDay(td-1);
@@ -1151,11 +1264,11 @@ async function checkToday(){
 
 async function toggleDay(i){
   if(!SD&&i===0){
-    const today=new Date().toISOString().split("T")[0];SD=today;
+    const today=todayKey();SD=today;
     await db.from("profiles").update({start_date:today}).eq("id",U.id);P.start_date=today;
   }
   const done=PROG[i]&&PROG[i].completed;
-  const dd=getDayDate(i);const dateStr=dd?dd.toISOString().split("T")[0]:new Date().toISOString().split("T")[0];
+  const dd=getDayDate(i);const dateStr=dd?dateKey(dd):todayKey();
   if(PROG[i]&&PROG[i].id){
     await db.from("progress").update({completed:!done}).eq("id",PROG[i].id);
     PROG[i].completed=!done;
@@ -1201,6 +1314,9 @@ function calcCalTarget(){
   return Math.round(tdee/10)*10;
 }
 
+function dateKey(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 function todayKey(){
   const d=new Date();
   // Local date (not UTC) so the day rolls over at local midnight, not UTC midnight
@@ -1422,7 +1538,7 @@ async function addHabit(){
 }
 
 async function toggleHab(hid){
-  const today=new Date().toISOString().split("T")[0];
+  const today=todayKey();
   const done=HLOGS[hid]&&HLOGS[hid].completed;
   if(HLOGS[hid]&&HLOGS[hid].id){
     await db.from("habit_logs").update({completed:!done}).eq("id",HLOGS[hid].id);
@@ -1900,7 +2016,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.05.31.9";
+const APP_VERSION = "2026.06.01.1";
 
 async function checkForUpdate(){
   try{
