@@ -786,7 +786,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 
   <div class="page active" id="page-home">
     <div class="thero reveal">
-      <div class="thero-bar"><span>Today's Mission</span><span id="thdate"></span></div>
+      <div class="thero-bar"><span id="thero-label">Today's Mission</span><span id="thdate"></span></div>
       <div class="thero-body">
         <div class="thero-day">Day <span id="thdnum">0</span></div>
         <div class="thero-phase" id="thphase">Tap Day 1 below to start</div>
@@ -797,7 +797,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
     </div>
-    <button class="plan-cta reveal" onclick="openPlanModal()"><span class="plan-cta-ico">🎯</span><span class="plan-cta-txt"><span class="plan-cta-t" id="plan-cta-title">Choose Your Plan</span><span class="plan-cta-s" id="plan-cta-sub">Pick a goal that fits you</span></span><span class="plan-cta-arrow">›</span></button>
+    <button class="plan-cta reveal" onclick="openPlanModal()"><span class="plan-cta-ico" id="plan-cta-ico">🎯</span><span class="plan-cta-txt"><span class="plan-cta-t" id="plan-cta-title">Choose Your Plan</span><span class="plan-cta-s" id="plan-cta-sub">Pick a goal that fits you</span></span><span class="plan-cta-arrow">›</span></button>
     <div class="standing reveal" id="standing-card">
       <div class="standing-hd">Today's Standing</div>
       <div class="standing-grid" id="standing-grid">
@@ -908,8 +908,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   </div>
 
   <div class="page" id="page-diet">
-    <div class="pg-title">Diet Plan</div>
-    <div class="pg-sub">Personalized nutrition based on your profile</div>
+    <div class="pg-title" id="diet-title">Nutrition</div>
+    <div class="pg-sub" id="diet-sub">Personalized nutrition based on your profile</div>
     <div class="bmi-box reveal" id="dbmi">
       <div class="bmi-ring"><div class="bmi-n" id="dbmin">0</div><div class="bmi-u">BMI</div></div>
       <div><div class="bmi-cat" id="dbmcat">Loading...</div><div class="bmi-desc" id="dbmdesc"></div></div>
@@ -970,8 +970,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   </div>
 
   <div class="page hidden" id="page-workouts">
-    <div class="pg-title">Workouts</div>
-    <div class="pg-sub">Log today's training</div>
+    <div class="pg-title" id="wk-title">Workouts</div>
+    <div class="pg-sub" id="wk-sub">Log today's training</div>
     <div class="wk-mode">
       <button class="wk-modebtn on" id="wk-mode-quick" onclick="wkSetMode('quick')">Quick Log</button>
       <button class="wk-modebtn" id="wk-mode-detail" onclick="wkSetMode('detail')">Detailed</button>
@@ -1000,7 +1000,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 
   <div class="page hidden" id="page-progress">
     <div class="pg-title">Progress</div>
-    <div class="pg-sub">How you're doing over time</div>
+    <div class="pg-sub" id="prog-sub">How you're doing over time</div>
     <div class="insight-coach reveal" id="insight-coach"></div>
     <div class="card reveal" id="insight-chart-card">
       <div class="card-lbl">Weight vs Calorie Balance</div>
@@ -1088,6 +1088,18 @@ const PLAN_TRACKS=[
    desc:"High intensity functional movements. Safe and effective when scaled to your level and learned with proper coaching. We follow the principle: mechanics first, then consistency, then intensity. This track is best done with a qualified coach.",
    lengths:[30,60,90],risk:"high",status:"soon"}
 ];
+
+// Single source of truth for the user's active goal (defaults to beginner journey)
+function activeGoal(){
+  const id=(P&&P.plan_goal)?P.plan_goal:"beginner";
+  return PLAN_TRACKS.find(t=>t.id===id)||PLAN_TRACKS[0];
+}
+function goalLabel(){return activeGoal().name;}
+function goalShort(){
+  // Shorter label for tight spaces
+  const n=activeGoal().name;
+  return n.split(" / ")[0];
+}
 
 const DAYS=[
   {d:1,n:"Monday",tg:"tca",tl:"Light Cardio",w:"15 min walk + high knees",wd:"3 sets of 20 high knees after the walk.",mid:"BBQ Salad, United King",din:"Seekh kebab 3 pcs + raita",cheat:false},
@@ -1268,6 +1280,8 @@ function renderHome(){
   document.getElementById("nstreak").textContent=getStreak()+" day streak";
   renderStanding();
   updatePlanCta();
+  const hl=document.getElementById("thero-label");
+  if(hl)hl.textContent=(P&&P.plan_goal)?(goalShort()+" Plan"):"Today's Mission";
 }
 
 // ===== Today's Standing dashboard (modular tiles) =====
@@ -1771,6 +1785,12 @@ async function editWaterGoal(){
 
 function renderDiet(){
   if(!P)return;
+  // Thread the active goal into the tab framing
+  const g=activeGoal();
+  const dt=document.getElementById("diet-title");
+  const ds=document.getElementById("diet-sub");
+  if(dt)dt.textContent=(P&&P.plan_goal)?goalShort()+" Nutrition":"Nutrition";
+  if(ds)ds.textContent=(P&&P.plan_goal)?("Eating to support your "+goalShort().toLowerCase()+" goal"):"Personalized nutrition based on your profile";
   const bmi=P.bmi||0;
   document.getElementById("dbmin").textContent=bmi.toFixed(1);
   const{cat,desc}=getBMI(bmi);
@@ -1966,10 +1986,19 @@ async function planExpressInterest(goal,length){
 }
 
 function updatePlanCta(){
-  const t=PLAN_TRACKS.find(x=>x.id===(P&&P.plan_goal));
-  if(t){
-    document.getElementById("plan-cta-title").textContent=t.name+" Plan";
-    document.getElementById("plan-cta-sub").textContent="Tap to change your goal";
+  const t=activeGoal();
+  const icoEl=document.getElementById("plan-cta-ico");
+  const titleEl=document.getElementById("plan-cta-title");
+  const subEl=document.getElementById("plan-cta-sub");
+  if(!titleEl)return;
+  if(P&&P.plan_goal){
+    if(icoEl)icoEl.textContent=t.icon;
+    titleEl.textContent="Your Plan: "+t.name;
+    subEl.textContent=t.tagline+". Tap to change.";
+  }else{
+    if(icoEl)icoEl.textContent="🎯";
+    titleEl.textContent="Choose Your Plan";
+    subEl.textContent="Pick a goal that fits you";
   }
 }
 
@@ -2084,6 +2113,8 @@ async function logWeight(){
 
 // ===== Progress tab: load weight + build insights =====
 async function loadProgress(){
+  const ps=document.getElementById("prog-sub");
+  if(ps)ps.textContent=(P&&P.plan_goal)?("Your progress toward "+goalShort().toLowerCase()):"How you're doing over time";
   await loadWeight();
   await buildInsights();
 }
@@ -2229,6 +2260,10 @@ function wkSetMode(m){
 }
 
 async function loadWorkouts(){
+  const wt=document.getElementById("wk-title");
+  const ws=document.getElementById("wk-sub");
+  if(wt)wt.textContent=(P&&P.plan_goal)?goalShort()+" Training":"Workouts";
+  if(ws)ws.textContent=(P&&P.plan_goal)?("Training that supports your "+goalShort().toLowerCase()+" goal"):"Log today's training";
   wkSetMode(WK_MODE);
   renderWkExercises();
   await loadWkHistory();
@@ -2686,7 +2721,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.02.2";
+const APP_VERSION = "2026.06.03.1";
 
 async function checkForUpdate(){
   try{
