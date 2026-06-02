@@ -88,12 +88,38 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wt-empty-icon{width:38px;height:38px;color:var(--acc);opacity:.55;animation:wtPulse 2s ease-in-out infinite;}
 @keyframes wtPulse{0%,100%{opacity:.35;transform:translateY(0);}50%{opacity:.7;transform:translateY(-3px);}}
 .wt-empty-txt{font-style:normal;font-size:13px;line-height:1.4;color:var(--t2);}
+.wt-empty-chart{width:150px;height:55px;}
+.wt-ghost-line{stroke-dasharray:260;stroke-dashoffset:260;animation:wtGhost 3s ease-in-out infinite;opacity:.7;}
+.wt-ghost-dot{opacity:0;animation:wtGhostDot 3s ease-in-out infinite;}
+@keyframes wtGhost{0%{stroke-dashoffset:260;}45%{stroke-dashoffset:0;}80%{stroke-dashoffset:0;opacity:.7;}100%{stroke-dashoffset:0;opacity:0;}}
+@keyframes wtGhostDot{0%,40%{opacity:0;}55%{opacity:1;}80%{opacity:1;}100%{opacity:0;}}
 @keyframes wtDraw{to{stroke-dashoffset:0;}}
 .wt-line-anim{animation:wtDraw 1.1s cubic-bezier(.6,.05,.2,1) forwards;}
 .wt-area{animation:wtFade 1s ease .9s both;}
 @keyframes wtFade{from{opacity:0;}to{opacity:.1;}}
 .wt-dot{opacity:0;animation:wtDotPop .35s ease forwards;}
 @keyframes wtDotPop{from{opacity:0;}to{opacity:1;}}
+.wk-mode{display:flex;gap:8px;margin-bottom:14px;}
+.wk-modebtn{flex:1;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:10px;font-weight:600;cursor:pointer;font-size:13px;}
+.wk-modebtn.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
+.wk-row{display:flex;gap:8px;margin-top:10px;}
+.wk-addex{position:relative;margin-top:6px;}
+.wk-savebtn{width:100%;background:var(--acc);color:var(--bg);border:none;border-radius:var(--rs);padding:12px;font-weight:700;cursor:pointer;margin-top:12px;font-size:14px;}
+.wk-ex{background:var(--s2);border-radius:var(--rs);padding:10px;margin-bottom:8px;}
+.wk-ex-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.wk-ex-name{font-weight:600;font-size:14px;}
+.wk-ex-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;}
+.wk-ex-fields{display:flex;gap:6px;}
+.wk-ex-fields input{flex:1;min-width:0;background:var(--s1);border:1px solid var(--s3);border-radius:8px;padding:8px 6px;color:var(--t1);font-size:12px;text-align:center;}
+.wk-ex-fields input::placeholder{color:var(--t3);font-size:11px;}
+.wk-history{display:flex;flex-direction:column;gap:8px;}
+.wk-hist-item{background:var(--s2);border-radius:var(--rs);padding:11px 12px;}
+.wk-hist-top{display:flex;align-items:center;justify-content:space-between;}
+.wk-hist-name{font-weight:600;font-size:14px;color:var(--t1);}
+.wk-hist-date{font-size:11px;color:var(--t3);}
+.wk-hist-meta{font-size:12px;color:var(--t2);margin-top:3px;}
+.wk-hist-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:14px;}
+.wk-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px;}
 .wt-log{display:flex;gap:8px;}
 .wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
 .wt-reminder:empty{display:none;}
@@ -129,6 +155,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .histwk-dot.cal{background:var(--acc);}
 .histwk-dot.water{background:#60a5fa;}
 .histwk-dot.hab{background:#3dd68c;}
+.histwk-dot.wk{background:#f59e0b;}
 .histwk-detail{margin-top:12px;}
 .histwk-detail:empty{display:none;}
 .histwk-detail-card{background:var(--s2);border-radius:var(--rs);padding:12px;font-size:13px;}
@@ -861,6 +888,35 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <div class="card reveal"><div class="card-lbl">Account</div><button class="btn-danger" onclick="doLogout()">Sign Out</button></div>
   </div>
 
+  <div class="page hidden" id="page-workouts">
+    <div class="pg-title">Workouts</div>
+    <div class="pg-sub">Log today's training</div>
+    <div class="wk-mode">
+      <button class="wk-modebtn on" id="wk-mode-quick" onclick="wkSetMode('quick')">Quick Log</button>
+      <button class="wk-modebtn" id="wk-mode-detail" onclick="wkSetMode('detail')">Detailed</button>
+    </div>
+    <div class="card reveal" id="wk-quick-card">
+      <input type="text" class="finput" id="wk-q-name" placeholder="Workout (e.g. Push day, Cardio, Yoga)" autocomplete="off">
+      <div class="wk-row">
+        <input type="number" class="finput" id="wk-q-dur" placeholder="Minutes" min="1" style="flex:1">
+        <button class="cal-addbtn" onclick="logQuickWorkout()">Log</button>
+      </div>
+    </div>
+    <div class="card reveal" id="wk-detail-card" style="display:none">
+      <input type="text" class="finput" id="wk-d-name" placeholder="Workout name (e.g. Push day)" autocomplete="off" style="margin-bottom:10px">
+      <div id="wk-ex-list"></div>
+      <div class="wk-addex">
+        <input type="text" class="finput" id="wk-ex-search" placeholder="Add exercise — search or type" oninput="wkExSearch()" autocomplete="off">
+        <div id="wk-ex-suggest" class="food-suggest"></div>
+      </div>
+      <button class="wk-savebtn" onclick="logDetailWorkout()">Save Workout</button>
+    </div>
+    <div class="card reveal">
+      <div class="card-lbl">Recent Workouts</div>
+      <div id="wk-history" class="wk-history"></div>
+    </div>
+  </div>
+
   <div class="page hidden" id="page-admin">
     <div class="pg-title">Admin Panel</div>
     <div class="pg-sub">Manage RITUAL members</div>
@@ -873,6 +929,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <button class="bni on" onclick="showPage('home')"><span class="bni-icon">🏠</span><span class="bni-lbl">Home</span></button>
     <button class="bni" onclick="showPage('diet')"><span class="bni-icon">🥗</span><span class="bni-lbl">Diet</span></button>
     <button class="bni" onclick="showPage('habits')"><span class="bni-icon">⚡</span><span class="bni-lbl">Habits</span></button>
+    <button class="bni" onclick="showPage('workouts')"><span class="bni-icon">💪</span><span class="bni-lbl">Workouts</span></button>
     <button class="bni" onclick="showPage('profile')"><span class="bni-icon">👤</span><span class="bni-lbl">Profile</span></button>
     <button class="bni hidden" id="admBtn" onclick="showPage('admin')"><span class="bni-icon">🛡️</span><span class="bni-lbl">Admin</span></button>
   </nav>
@@ -1174,13 +1231,15 @@ async function loadHistWeek(){
   const habTotal=(typeof HABITS!=="undefined"&&HABITS.length)?HABITS.length:0;
   let foods=[],waters=[],habs=[];
   try{
-    const[f,w,h]=await Promise.all([
+    const[f,w,h,wk]=await Promise.all([
       db.from("food_logs").select("log_date,calories").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
       db.from("water_logs").select("log_date,glasses").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
-      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest).lte("date",newest)
+      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest).lte("date",newest),
+      db.from("workout_logs").select("log_date,name").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest)
     ]);
-    foods=f.data||[];waters=w.data||[];habs=h.data||[];
-  }catch(e){console.warn("histweek fetch",e);}
+    foods=f.data||[];waters=w.data||[];habs=h.data||[];window._histWk=wk.data||[];
+  }catch(e){console.warn("histweek fetch",e);window._histWk=[];}
+  const wkData=window._histWk||[];
   const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const tk=todayKey();
   HISTDAYS=days.map(d=>{
@@ -1188,9 +1247,11 @@ async function loadHistWeek(){
     const wrow=waters.find(x=>x.log_date===d.key);
     const glasses=wrow?Number(wrow.glasses):0;
     const habDone=habs.filter(x=>x.date===d.key&&x.completed).length;
+    const workouts=wkData.filter(x=>x.log_date===d.key);
     return{
       key:d.key,dayName:dn[d.date.getDay()],dateObj:d.date,isToday:d.key===tk,
       cal,glasses,water:+(glasses*250/1000).toFixed(1),habDone,habTotal,
+      workouts:workouts.map(x=>x.name),wkCount:workouts.length,
       hitHab:habTotal>0&&habDone>=habTotal
     };
   });
@@ -1230,6 +1291,7 @@ function renderHistWeek(){
         <div class="histwk-dot${d.cal>0?' cal':''}"></div>
         <div class="histwk-dot${d.glasses>0?' water':''}"></div>
         <div class="histwk-dot${d.habDone>0?' hab':''}"></div>
+        <div class="histwk-dot${d.wkCount>0?' wk':''}"></div>
       </div>
     </div>`).join("");
   document.getElementById("histwk-detail").innerHTML="";
@@ -1274,6 +1336,7 @@ function showHistDay(i){
       <div class="histwk-detail-row"><span>Calories</span><span>${d.cal>0?d.cal+" cal":"Not logged"}</span></div>
       <div class="histwk-detail-row"><span>Water</span><span>${d.glasses>0?d.water+" L ("+d.glasses+" glasses)":"Not logged"}</span></div>
       <div class="histwk-detail-row"><span>Habits</span><span>${d.habTotal>0?d.habDone+" / "+d.habTotal:"None set"}</span></div>
+      <div class="histwk-detail-row"><span>Workouts</span><span>${d.wkCount>0?d.workouts.join(", "):"None"}</span></div>
     </div>`;
 }
 
@@ -1721,9 +1784,12 @@ function renderWeightChart(){
     const msg=WEIGHTS.length===0
       ? "Log your weight to start tracking."
       : "One more weigh-in to see your trend.";
-    // Render as real HTML (NOT inside the stretched SVG) so it sizes correctly
+    // Animated sample trend line that loops — previews what their chart will look like
     wrap.innerHTML=`<div class="wt-empty">
-      <svg class="wt-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/></svg>
+      <svg class="wt-empty-chart" viewBox="0 0 200 70" preserveAspectRatio="none">
+        <polyline class="wt-ghost-line" points="5,55 40,48 75,52 110,30 145,34 195,12" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle class="wt-ghost-dot" cx="195" cy="12" r="3.5" fill="var(--acc)"/>
+      </svg>
       <div class="wt-empty-txt">${msg}</div></div>`;
     return;
   }
@@ -1779,6 +1845,126 @@ async function logWeight(){
     renderProfPage();
     showToast("Weight logged!","ok");
   }catch(e){showToast("Could not save: "+e.message,"err");}
+}
+
+// ===== Workout Logging =====
+const EXERCISE_DB=["Bench Press","Squat","Deadlift","Overhead Press","Barbell Row","Pull Up","Push Up","Lat Pulldown","Bicep Curl","Tricep Extension","Leg Press","Lunges","Leg Curl","Leg Extension","Shoulder Press","Lateral Raise","Chest Fly","Cable Row","Plank","Crunches","Running","Cycling","Treadmill","Jump Rope","Burpees","Mountain Climbers","Yoga","Stretching","Swimming","Walking"];
+let WK_MODE="quick", WK_EXERCISES=[];
+
+function wkSetMode(m){
+  WK_MODE=m;
+  document.getElementById("wk-mode-quick").classList.toggle("on",m==="quick");
+  document.getElementById("wk-mode-detail").classList.toggle("on",m==="detail");
+  document.getElementById("wk-quick-card").style.display=(m==="quick")?"":"none";
+  document.getElementById("wk-detail-card").style.display=(m==="detail")?"":"none";
+}
+
+async function loadWorkouts(){
+  wkSetMode(WK_MODE);
+  renderWkExercises();
+  await loadWkHistory();
+}
+
+function wkExSearch(){
+  const q=document.getElementById("wk-ex-search").value.trim().toLowerCase();
+  const box=document.getElementById("wk-ex-suggest");
+  if(q.length<1){box.classList.remove("on");box.innerHTML="";return;}
+  const matches=EXERCISE_DB.filter(e=>e.toLowerCase().includes(q)).slice(0,6);
+  let html=matches.map(e=>`<div class="food-suggest-item" onclick="wkAddExercise('${e.replace(/'/g,"\\'")}')"><span>${e}</span></div>`).join("");
+  // also offer "add your own" if typed text isn't an exact match
+  if(!EXERCISE_DB.some(e=>e.toLowerCase()===q)){
+    const typed=document.getElementById("wk-ex-search").value.trim();
+    html+=`<div class="food-suggest-item" onclick="wkAddExercise('${typed.replace(/'/g,"\\'")}')"><span>+ Add "${escapeHtml(typed)}"</span></div>`;
+  }
+  box.innerHTML=html;box.classList.add("on");
+}
+
+function wkAddExercise(name){
+  WK_EXERCISES.push({name,sets:"",reps:"",weight:"",duration:""});
+  document.getElementById("wk-ex-search").value="";
+  document.getElementById("wk-ex-suggest").classList.remove("on");
+  renderWkExercises();
+}
+
+function wkRemoveExercise(i){WK_EXERCISES.splice(i,1);renderWkExercises();}
+
+function wkUpdateEx(i,field,val){if(WK_EXERCISES[i])WK_EXERCISES[i][field]=val;}
+
+function renderWkExercises(){
+  const el=document.getElementById("wk-ex-list");
+  if(!el)return;
+  el.innerHTML=WK_EXERCISES.map((ex,i)=>
+    `<div class="wk-ex">
+      <div class="wk-ex-hd"><span class="wk-ex-name">${escapeHtml(ex.name)}</span><button class="wk-ex-del" onclick="wkRemoveExercise(${i})">✕</button></div>
+      <div class="wk-ex-fields">
+        <input type="number" placeholder="Sets" value="${ex.sets}" oninput="wkUpdateEx(${i},'sets',this.value)">
+        <input type="number" placeholder="Reps" value="${ex.reps}" oninput="wkUpdateEx(${i},'reps',this.value)">
+        <input type="number" placeholder="Kg" value="${ex.weight}" oninput="wkUpdateEx(${i},'weight',this.value)">
+        <input type="number" placeholder="Min" value="${ex.duration}" oninput="wkUpdateEx(${i},'duration',this.value)">
+      </div>
+    </div>`).join("");
+}
+
+async function logQuickWorkout(){
+  const name=document.getElementById("wk-q-name").value.trim();
+  const dur=parseInt(document.getElementById("wk-q-dur").value,10)||null;
+  if(!name){showToast("Enter a workout name","err");return;}
+  try{
+    const{error}=await db.from("workout_logs").insert({
+      user_id:U.id,log_date:todayKey(),name,duration_min:dur,exercises:null
+    });
+    if(error)throw error;
+    document.getElementById("wk-q-name").value="";
+    document.getElementById("wk-q-dur").value="";
+    await loadWkHistory();
+    showToast("Workout logged!","ok");
+  }catch(e){showToast("Could not save: "+e.message,"err");}
+}
+
+async function logDetailWorkout(){
+  const name=document.getElementById("wk-d-name").value.trim();
+  if(!name){showToast("Enter a workout name","err");return;}
+  if(WK_EXERCISES.length===0){showToast("Add at least one exercise","err");return;}
+  // total duration = sum of any per-exercise durations
+  let totalDur=WK_EXERCISES.reduce((s,e)=>s+(parseInt(e.duration,10)||0),0)||null;
+  try{
+    const{error}=await db.from("workout_logs").insert({
+      user_id:U.id,log_date:todayKey(),name,duration_min:totalDur,
+      exercises:JSON.stringify(WK_EXERCISES)
+    });
+    if(error)throw error;
+    document.getElementById("wk-d-name").value="";
+    WK_EXERCISES=[];renderWkExercises();
+    await loadWkHistory();
+    showToast("Workout saved!","ok");
+  }catch(e){showToast("Could not save: "+e.message,"err");}
+}
+
+async function loadWkHistory(){
+  const el=document.getElementById("wk-history");
+  if(!el)return;
+  try{
+    const{data}=await db.from("workout_logs").select("*").eq("user_id",U.id).order("log_date",{ascending:false}).limit(15);
+    if(!data||data.length===0){el.innerHTML='<div class="wk-empty">No workouts logged yet. Log your first one above!</div>';return;}
+    el.innerHTML=data.map(w=>{
+      let meta="";
+      if(w.exercises){
+        try{const ex=JSON.parse(w.exercises);meta=ex.length+" exercise"+(ex.length!==1?"s":"")+(w.duration_min?" · "+w.duration_min+" min":"");}
+        catch(e){meta=w.duration_min?w.duration_min+" min":"";}
+      }else{meta=w.duration_min?w.duration_min+" min":"Logged";}
+      return `<div class="wk-hist-item">
+        <div class="wk-hist-top"><span class="wk-hist-name">${escapeHtml(w.name)}</span><span class="wk-hist-date">${fmtWkDate(w.log_date)}</span></div>
+        <div class="wk-hist-meta">${meta}</div>
+      </div>`;
+    }).join("");
+  }catch(e){el.innerHTML='<div class="wk-empty">Could not load workouts.</div>';}
+}
+
+function fmtWkDate(s){
+  const d=new Date(s+"T12:00:00");
+  const m=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  if(s===todayKey())return "Today";
+  return m[d.getMonth()]+" "+d.getDate();
 }
 
 async function loadAdmin(){
@@ -2035,11 +2221,12 @@ function showPage(name){
   const pg=document.getElementById("page-"+name);
   pg.classList.remove("hidden");
   pg.classList.add("active");
-  const bmap={home:0,diet:1,habits:2,profile:3,admin:4};
+  const bmap={home:0,diet:1,habits:2,workouts:3,profile:4,admin:5};
   const btns=document.querySelectorAll(".bni");
   if(bmap[name]!==undefined)btns[bmap[name]]?.classList.add("on");
   if(name==="home")renderStanding();
   if(name==="habits"){loadHabs().then(renderHabs);}
+  if(name==="workouts")loadWorkouts();
   if(name==="admin")loadAdmin();
   if(name==="profile")renderProfPage();
   window.scrollTo(0,0);observeReveal();
@@ -2129,7 +2316,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.01.3";
+const APP_VERSION = "2026.06.01.4";
 
 async function checkForUpdate(){
   try{
