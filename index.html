@@ -151,6 +151,47 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .ist-sub{font-size:10px;color:var(--t3);}
 .insight-note{background:var(--s2);border:1px solid var(--s3);border-radius:var(--rs);padding:12px;font-size:11px;color:var(--t3);line-height:1.5;margin-top:4px;}
 .insight-note .ti{color:var(--t2);}
+.plan-cta{width:100%;display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid rgba(200,255,0,0.25);border-radius:var(--rl);padding:14px 16px;margin-bottom:14px;cursor:pointer;text-align:left;}
+.plan-cta:active{transform:scale(.99);}
+.plan-cta-ico{font-size:22px;}
+.plan-cta-txt{flex:1;display:flex;flex-direction:column;}
+.plan-cta-t{font-weight:700;font-size:15px;color:var(--t1);}
+.plan-cta-s{font-size:12px;color:var(--t3);}
+.plan-cta-arrow{font-size:22px;color:var(--acc);}
+.plan-modal{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;}
+.plan-modal.on{display:flex;animation:pmFade .2s ease;}
+@keyframes pmFade{from{opacity:0;}to{opacity:1;}}
+.plan-modal-inner{background:var(--s1);width:100%;max-width:520px;max-height:88vh;overflow-y:auto;border-radius:18px 18px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom));animation:pmUp .28s cubic-bezier(.22,.61,.36,1);}
+@keyframes pmUp{from{transform:translateY(40px);}to{transform:translateY(0);}}
+.plan-modal-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.plan-modal-title{font-family:Oswald,sans-serif;font-size:22px;font-weight:600;}
+.plan-modal-sub{font-size:13px;color:var(--t3);margin-top:2px;}
+.plan-modal-close{background:var(--s3);border:none;color:var(--t1);width:30px;height:30px;border-radius:50%;font-size:15px;cursor:pointer;flex-shrink:0;}
+.plan-goals{display:flex;flex-direction:column;gap:10px;}
+.plan-goal{display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--s3);border-radius:var(--rs);padding:14px;cursor:pointer;text-align:left;width:100%;transition:border-color .15s;}
+.plan-goal:active{transform:scale(.99);}
+.plan-goal.current{border-color:var(--acc);}
+.plan-goal-ico{font-size:24px;flex-shrink:0;}
+.plan-goal-body{flex:1;min-width:0;}
+.plan-goal-name{font-weight:700;font-size:15px;color:var(--t1);display:flex;align-items:center;gap:8px;}
+.plan-goal-tag{font-size:12px;color:var(--t2);margin-top:2px;}
+.plan-goal-arrow{color:var(--t3);font-size:20px;}
+.plan-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:20px;}
+.plan-badge.ready{background:rgba(61,214,140,.15);color:#3dd68c;}
+.plan-badge.soon{background:var(--s3);color:var(--t3);}
+.plan-badge.current{background:var(--acc);color:var(--bg);}
+.plan-back{background:none;border:none;color:var(--acc);font-size:13px;cursor:pointer;padding:0;margin-bottom:14px;}
+.plan-length-info{background:var(--s2);border-radius:var(--rs);padding:14px;margin-bottom:14px;}
+.plan-length-info .pli-name{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px;}
+.plan-length-info .pli-desc{font-size:13px;color:var(--t2);line-height:1.5;margin-top:8px;}
+.plan-risk{font-size:12px;color:var(--am);margin-top:10px;line-height:1.4;}
+.plan-lengths{display:flex;gap:10px;margin-bottom:14px;}
+.plan-len{flex:1;background:var(--s2);border:1px solid var(--s3);border-radius:var(--rs);padding:16px 8px;text-align:center;cursor:pointer;}
+.plan-len:active{transform:scale(.97);}
+.plan-len-n{font-family:Oswald,sans-serif;font-size:24px;font-weight:700;color:var(--acc);}
+.plan-len-l{font-size:11px;color:var(--t3);text-transform:uppercase;margin-top:2px;}
+.plan-soon-box{background:var(--s2);border:1px dashed var(--s4);border-radius:var(--rs);padding:14px;font-size:13px;color:var(--t2);line-height:1.5;text-align:center;}
+.plan-soon-box button{margin-top:10px;background:var(--acc);color:var(--bg);border:none;border-radius:var(--rs);padding:10px 18px;font-weight:700;cursor:pointer;}
 .wt-log{display:flex;gap:8px;}
 .wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
 .wt-reminder:empty{display:none;}
@@ -608,6 +649,27 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 <canvas id="bgc"></canvas>
 <div id="toast" class="toast"></div>
 
+<div id="plan-modal" class="plan-modal">
+  <div class="plan-modal-inner">
+    <div class="plan-modal-hd">
+      <div>
+        <div class="plan-modal-title" id="plan-modal-title">Choose Your Plan</div>
+        <div class="plan-modal-sub" id="plan-modal-sub">Pick a goal, then a length</div>
+      </div>
+      <button class="plan-modal-close" onclick="closePlanModal()">✕</button>
+    </div>
+    <div id="plan-step-goal" class="plan-step">
+      <div id="plan-goals" class="plan-goals"></div>
+    </div>
+    <div id="plan-step-length" class="plan-step" style="display:none">
+      <button class="plan-back" onclick="planBackToGoals()">‹ Back to goals</button>
+      <div id="plan-length-head"></div>
+      <div id="plan-lengths" class="plan-lengths"></div>
+      <div id="plan-soon-note"></div>
+    </div>
+  </div>
+</div>
+
 <div id="loader-screen" class="loader screen">
   <div class="loader-ring"></div>
   <div class="loader-text">LOADING RITUAL</div>
@@ -735,6 +797,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
     </div>
+    <button class="plan-cta reveal" onclick="openPlanModal()"><span class="plan-cta-ico">🎯</span><span class="plan-cta-txt"><span class="plan-cta-t" id="plan-cta-title">Choose Your Plan</span><span class="plan-cta-s" id="plan-cta-sub">Pick a goal that fits you</span></span><span class="plan-cta-arrow">›</span></button>
     <div class="standing reveal" id="standing-card">
       <div class="standing-hd">Today's Standing</div>
       <div class="standing-grid" id="standing-grid">
@@ -1001,6 +1064,31 @@ try{
 
 let U=null,P=null,PROG={},HABITS=[],HLOGS={},GOAL="",ACT="",COL="#c8ff00",SD=null;
 
+// ===== Plan Tracks (data-driven so trainer content slots in later) =====
+// Each track: id, name, tagline, description, lengths offered, risk level, status.
+// "ready" tracks have a usable program now; "soon" tracks show the overview and
+// collect interest until their full daily content (and trainer input) is added.
+const PLAN_TRACKS=[
+  {id:"beginner",name:"Beginner / Get Fit",icon:"🌱",tagline:"Start from zero, build the habit",
+   desc:"A gradual 40 day journey from couch to gym ready. Short sessions that grow as you do. Perfect if you are just starting out.",
+   lengths:[40],risk:"low",status:"ready"},
+  {id:"fatloss",name:"Fat Loss",icon:"🔥",tagline:"Lose fat, keep your strength",
+   desc:"Mixes resistance training with conditioning and a calorie focus. Based on the principle that fat loss comes mostly from a sustainable calorie deficit plus consistent training.",
+   lengths:[30,60,90],risk:"low",status:"soon"},
+  {id:"muscle",name:"Weight Gain / Muscle",icon:"💪",tagline:"Build size and strength",
+   desc:"Progressive resistance training focused on compound movements and gradual overload, paired with a calorie surplus. Built for steady muscle growth.",
+   lengths:[30,60,90],risk:"low",status:"soon"},
+  {id:"strength",name:"Weightlifting / Strength",icon:"🏋️",tagline:"Get stronger on the big lifts",
+   desc:"Structured strength training using compound lifts and proven progression. Form and technique come first. Best paired with guidance when going heavy.",
+   lengths:[30,60,90],risk:"medium",status:"soon"},
+  {id:"circuit",name:"Circuit Training",icon:"⚡",tagline:"Conditioning and endurance",
+   desc:"Timed circuits that build cardiovascular fitness and muscular endurance. Scalable work and rest intervals for any level.",
+   lengths:[30,60,90],risk:"low",status:"soon"},
+  {id:"crossfit",name:"CrossFit Style",icon:"🤸",tagline:"High intensity functional training",
+   desc:"High intensity functional movements. Safe and effective when scaled to your level and learned with proper coaching. We follow the principle: mechanics first, then consistency, then intensity. This track is best done with a qualified coach.",
+   lengths:[30,60,90],risk:"high",status:"soon"}
+];
+
 const DAYS=[
   {d:1,n:"Monday",tg:"tca",tl:"Light Cardio",w:"15 min walk + high knees",wd:"3 sets of 20 high knees after the walk.",mid:"BBQ Salad, United King",din:"Seekh kebab 3 pcs + raita",cheat:false},
   {d:2,n:"Tuesday",tg:"tco",tl:"Core",w:"10 min core circuit",wd:"20 crunches, 20 sec plank, 15 leg raises x2.",mid:"Chicken Tikka Salad, United King",din:"Chicken tikka 4 pcs + 1 roti",cheat:false},
@@ -1179,6 +1267,7 @@ function renderHome(){
   renderToday(td);renderStats(td);renderCal(td);renderMot(td);renderCards(td);
   document.getElementById("nstreak").textContent=getStreak()+" day streak";
   renderStanding();
+  updatePlanCta();
 }
 
 // ===== Today's Standing dashboard (modular tiles) =====
@@ -1788,6 +1877,100 @@ function renderProfPage(){
 function toggleHabitForm(){
   const f=document.getElementById("habit-form");
   if(f)f.classList.toggle("on");
+}
+
+// ===== Plan selection modal =====
+let planSelGoal=null;
+
+function openPlanModal(){
+  renderPlanGoals();
+  document.getElementById("plan-step-goal").style.display="";
+  document.getElementById("plan-step-length").style.display="none";
+  document.getElementById("plan-modal-title").textContent="Choose Your Plan";
+  document.getElementById("plan-modal-sub").textContent="Pick a goal, then a length";
+  document.getElementById("plan-modal").classList.add("on");
+}
+function closePlanModal(){document.getElementById("plan-modal").classList.remove("on");}
+
+function renderPlanGoals(){
+  const cur=P&&P.plan_goal?P.plan_goal:"beginner"; // default existing users to beginner journey
+  document.getElementById("plan-goals").innerHTML=PLAN_TRACKS.map(t=>{
+    let badge="";
+    if(t.id===cur)badge='<span class="plan-badge current">Current</span>';
+    else if(t.status==="ready")badge='<span class="plan-badge ready">Ready</span>';
+    else badge='<span class="plan-badge soon">Soon</span>';
+    return `<button class="plan-goal${t.id===cur?' current':''}" onclick="planPickGoal('${t.id}')">
+      <span class="plan-goal-ico">${t.icon}</span>
+      <span class="plan-goal-body">
+        <span class="plan-goal-name">${t.name} ${badge}</span>
+        <span class="plan-goal-tag">${t.tagline}</span>
+      </span>
+      <span class="plan-goal-arrow">›</span>
+    </button>`;
+  }).join("");
+}
+
+function planPickGoal(id){
+  planSelGoal=PLAN_TRACKS.find(t=>t.id===id);
+  if(!planSelGoal)return;
+  document.getElementById("plan-step-goal").style.display="none";
+  document.getElementById("plan-step-length").style.display="";
+  document.getElementById("plan-modal-title").textContent=planSelGoal.name;
+  document.getElementById("plan-modal-sub").textContent=planSelGoal.tagline;
+  // info + risk note
+  let risk="";
+  if(planSelGoal.risk==="high")risk='<div class="plan-risk">⚠ This is a high intensity style. It is safest when scaled to your level and learned with a qualified coach. We follow: mechanics first, then consistency, then intensity.</div>';
+  else if(planSelGoal.risk==="medium")risk='<div class="plan-risk">⚠ When lifting heavy, prioritize form over weight. Consider guidance from a trainer as you progress.</div>';
+  document.getElementById("plan-length-head").innerHTML=
+    `<div class="plan-length-info"><div class="pli-name">${planSelGoal.icon} ${planSelGoal.name}</div><div class="pli-desc">${planSelGoal.desc}</div>${risk}</div>`;
+  // lengths
+  if(planSelGoal.status==="ready"){
+    document.getElementById("plan-lengths").style.display="";
+    document.getElementById("plan-lengths").innerHTML=planSelGoal.lengths.map(L=>
+      `<button class="plan-len" onclick="planEnroll('${planSelGoal.id}',${L})"><div class="plan-len-n">${L}</div><div class="plan-len-l">days</div></button>`).join("");
+    document.getElementById("plan-soon-note").innerHTML="";
+  }else{
+    // soon: show lengths as preview but enroll = express interest
+    document.getElementById("plan-lengths").style.display="";
+    document.getElementById("plan-lengths").innerHTML=planSelGoal.lengths.map(L=>
+      `<button class="plan-len" onclick="planExpressInterest('${planSelGoal.id}',${L})"><div class="plan-len-n">${L}</div><div class="plan-len-l">days</div></button>`).join("");
+    document.getElementById("plan-soon-note").innerHTML=
+      `<div class="plan-soon-box">The full day by day program for this goal is being finalized with input from certified trainers. Pick a length to register your interest and we will set you up as soon as it is ready.</div>`;
+  }
+}
+
+function planBackToGoals(){
+  document.getElementById("plan-step-goal").style.display="";
+  document.getElementById("plan-step-length").style.display="none";
+  document.getElementById("plan-modal-title").textContent="Choose Your Plan";
+  document.getElementById("plan-modal-sub").textContent="Pick a goal, then a length";
+}
+
+async function planEnroll(goal,length){
+  try{
+    await db.from("profiles").update({plan_goal:goal,plan_length:length}).eq("id",U.id);
+    P.plan_goal=goal;P.plan_length=length;
+    closePlanModal();
+    updatePlanCta();
+    showToast("You're on the "+PLAN_TRACKS.find(t=>t.id===goal).name+" plan!","ok");
+  }catch(e){showToast("Could not save plan. Try again.","err");}
+}
+
+async function planExpressInterest(goal,length){
+  try{
+    await db.from("profiles").update({plan_interest:goal+":"+length}).eq("id",U.id);
+    P.plan_interest=goal+":"+length;
+  }catch(e){/* column may not exist yet, non-critical */}
+  closePlanModal();
+  showToast("Thanks! We'll set up your "+PLAN_TRACKS.find(t=>t.id===goal).name+" plan when it's ready.","ok");
+}
+
+function updatePlanCta(){
+  const t=PLAN_TRACKS.find(x=>x.id===(P&&P.plan_goal));
+  if(t){
+    document.getElementById("plan-cta-title").textContent=t.name+" Plan";
+    document.getElementById("plan-cta-sub").textContent="Tap to change your goal";
+  }
 }
 
 // ===== Weight Tracking =====
@@ -2503,7 +2686,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.02.1";
+const APP_VERSION = "2026.06.02.2";
 
 async function checkForUpdate(){
   try{
