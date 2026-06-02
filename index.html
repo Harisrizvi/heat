@@ -120,6 +120,37 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wk-hist-meta{font-size:12px;color:var(--t2);margin-top:3px;}
 .wk-hist-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:14px;}
 .wk-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px;}
+.hh-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.hh-addbtn{background:var(--s3);border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:600;border-radius:8px;padding:6px 12px;cursor:pointer;}
+.habit-form{display:none;background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;}
+.habit-form.on{display:block;animation:pageIn .25s ease;}
+.insight-coach{background:linear-gradient(135deg,rgba(200,255,0,0.08),rgba(200,255,0,0.02));border:1px solid rgba(200,255,0,0.25);border-radius:var(--rl);padding:16px;margin-bottom:14px;opacity:0;transform:translateY(10px);}
+.insight-coach.on{animation:icIn .5s ease forwards;}
+@keyframes icIn{to{opacity:1;transform:translateY(0);}}
+.ic-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.ic-badge{width:28px;height:28px;border-radius:50%;background:var(--acc);color:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.ic-title{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;color:var(--t2);text-transform:uppercase;}
+.ic-body{font-size:14px;line-height:1.6;color:var(--t1);}
+.ic-body b{color:var(--acc);font-weight:600;}
+.insight-chart-sub{font-size:11px;color:var(--t3);margin-bottom:10px;}
+.insight-chartwrap{background:var(--s2);border-radius:var(--rs);padding:12px;height:160px;}
+.insight-chartwrap svg{width:100%;height:100%;overflow:visible;display:block;}
+.ins-wline{animation:wtDraw 1.2s cubic-bezier(.6,.05,.2,1) forwards;}
+.ins-cline{opacity:0;animation:icFade 1s ease .8s forwards;}
+@keyframes icFade{to{opacity:.85;}}
+.insight-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;}
+.ilg::before{content:"●";margin-right:4px;}
+.ilg-w{color:var(--acc);}
+.ilg-c{color:#60a5fa;}
+.insight-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.ist{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center;}
+.ist-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.ist-val{font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin:3px 0;}
+.ist-val.acc{color:var(--acc);}
+.ist-val.amber{color:#f59e0b;}
+.ist-sub{font-size:10px;color:var(--t3);}
+.insight-note{background:var(--s2);border:1px solid var(--s3);border-radius:var(--rs);padding:12px;font-size:11px;color:var(--t3);line-height:1.5;margin-top:4px;}
+.insight-note .ti{color:var(--t2);}
 .wt-log{display:flex;gap:8px;}
 .wt-reminder{margin-top:10px;font-size:12px;color:var(--am);text-align:center;}
 .wt-reminder:empty{display:none;}
@@ -249,7 +280,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .page{display:none;width:100%;max-width:520px;margin:0 auto;padding:20px 18px calc(96px + env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh;}
 .page.active{display:block;animation:pageIn .32s cubic-bezier(.22,.61,.36,1);}
 @keyframes pageIn{from{opacity:0;transform:translateY(14px) scale(.99);}to{opacity:1;transform:translateY(0) scale(1);}}
-/* Desktop: use the space — wider centered column */
+/* Desktop: use the space, wider centered column */
 @media(min-width:781px){
   .page{max-width:880px;padding-top:32px;}
   .standing-grid{grid-template-columns:repeat(4,1fr);}
@@ -724,7 +755,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
           <div class="stile-info"><div class="stile-lbl">Streak</div><div class="stile-val" id="st-streak">0 days</div></div>
         </div>
         <div class="stile" onclick="showPage('profile')">
-          <div class="stile-ring stile-streak" style="border-color:#60a5fa;color:#60a5fa;font-size:15px;"><span id="st-weight-n">—</span></div>
+          <div class="stile-ring stile-streak" style="border-color:#60a5fa;color:#60a5fa;font-size:15px;"><span id="st-weight-n"></span></div>
           <div class="stile-info"><div class="stile-lbl">Weight</div><div class="stile-val" id="st-weight">No data</div></div>
         </div>
       </div>
@@ -752,6 +783,26 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div class="histwk-summary" id="histwk-summary"></div>
       <div class="histwk-days" id="histwk-days"></div>
       <div class="histwk-detail" id="histwk-detail"></div>
+    </div>
+    <div class="card reveal" id="home-habits-card">
+      <div class="hh-head">
+        <div class="card-lbl" style="margin:0">Today's Habits</div>
+        <button class="hh-addbtn" onclick="toggleHabitForm()">+ Add</button>
+      </div>
+      <div id="habit-form" class="habit-form">
+        <input type="text" class="finput" id="hname" placeholder="Habit name (e.g. Morning walk)" style="margin-bottom:8px">
+        <div class="col-picker" style="margin-bottom:8px">
+          <div class="col-opt sel" style="background:#c8ff00" onclick="selCol('#c8ff00',this)"></div>
+          <div class="col-opt" style="background:#ff4f4f" onclick="selCol('#ff4f4f',this)"></div>
+          <div class="col-opt" style="background:#ffb347" onclick="selCol('#ffb347',this)"></div>
+          <div class="col-opt" style="background:#b794f4" onclick="selCol('#b794f4',this)"></div>
+          <div class="col-opt" style="background:#3dd68c" onclick="selCol('#3dd68c',this)"></div>
+          <div class="col-opt" style="background:#60a5fa" onclick="selCol('#60a5fa',this)"></div>
+        </div>
+        <input type="hidden" id="hfreq" value="daily">
+        <button class="btn-full" onclick="addHabit()" style="margin-top:0">Save Habit</button>
+      </div>
+      <div id="hablist"></div>
     </div>
     <div class="stats-row reveal">
       <div class="sc"><div class="sc-lbl">Done</div><div class="sc-val acc" id="svd">0</div><div class="sc-sub">of 40 days</div></div>
@@ -845,45 +896,12 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     </div>
   </div>
 
-  <div class="page" id="page-habits">
-    <div class="pg-title">Habits</div>
-    <div class="pg-sub">Build your daily rituals</div>
-    <div class="card reveal">
-      <div class="card-lbl">Add New Habit</div>
-      <div class="field"><label class="flabel">Habit Name</label><input type="text" class="finput" id="hname" placeholder="e.g. Morning walk, Drink water"></div>
-      <div class="field"><label class="flabel">Frequency</label><select class="finput" id="hfreq"><option value="daily">Daily</option><option value="weekly">Weekly</option></select></div>
-      <div class="field">
-        <label class="flabel">Color</label>
-        <div class="col-picker">
-          <div class="col-opt sel" style="background:#c8ff00" onclick="selCol('#c8ff00',this)"></div>
-          <div class="col-opt" style="background:#ff4f4f" onclick="selCol('#ff4f4f',this)"></div>
-          <div class="col-opt" style="background:#ffb347" onclick="selCol('#ffb347',this)"></div>
-          <div class="col-opt" style="background:#b794f4" onclick="selCol('#b794f4',this)"></div>
-          <div class="col-opt" style="background:#3dd68c" onclick="selCol('#3dd68c',this)"></div>
-          <div class="col-opt" style="background:#60a5fa" onclick="selCol('#60a5fa',this)"></div>
-        </div>
-      </div>
-      <button class="btn-full" onclick="addHabit()" style="margin-top:0">Add Habit</button>
-    </div>
-    <div id="hablist"></div>
-  </div>
-
   <div class="page" id="page-profile">
     <div class="prof-head reveal">
       <div class="prof-av" id="pav">?</div>
       <div><div class="prof-name" id="pname">Loading...</div><div class="prof-email" id="pemail"></div><div class="prof-badge">Approved Member</div></div>
     </div>
     <div class="card reveal"><div class="card-lbl">Body Stats</div><div class="info-grid" id="pstats"></div></div>
-    <div class="card reveal" id="weight-card">
-      <div class="card-lbl">Weight Progress</div>
-      <div class="wt-stats" id="wt-stats"></div>
-      <div class="wt-chartwrap" id="wt-chartwrap"><svg id="wt-chart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg></div>
-      <div class="wt-log">
-        <input type="number" class="finput" id="wt-input" placeholder="Today's weight (kg)" step="0.1" min="20" max="400" style="flex:1">
-        <button class="cal-addbtn" onclick="logWeight()">Log</button>
-      </div>
-      <div id="wt-reminder" class="wt-reminder"></div>
-    </div>
     <div class="card reveal"><div class="card-lbl">Goal and Activity</div><div class="info-grid" id="pgoal"></div></div>
     <div class="card reveal"><div class="card-lbl">Account</div><button class="btn-danger" onclick="doLogout()">Sign Out</button></div>
   </div>
@@ -906,7 +924,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <input type="text" class="finput" id="wk-d-name" placeholder="Workout name (e.g. Push day)" autocomplete="off" style="margin-bottom:10px">
       <div id="wk-ex-list"></div>
       <div class="wk-addex">
-        <input type="text" class="finput" id="wk-ex-search" placeholder="Add exercise — search or type" oninput="wkExSearch()" autocomplete="off">
+        <input type="text" class="finput" id="wk-ex-search" placeholder="Add exercise (search or type)" oninput="wkExSearch()" autocomplete="off">
         <div id="wk-ex-suggest" class="food-suggest"></div>
       </div>
       <button class="wk-savebtn" onclick="logDetailWorkout()">Save Workout</button>
@@ -914,6 +932,35 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <div class="card reveal">
       <div class="card-lbl">Recent Workouts</div>
       <div id="wk-history" class="wk-history"></div>
+    </div>
+  </div>
+
+  <div class="page hidden" id="page-progress">
+    <div class="pg-title">Progress</div>
+    <div class="pg-sub">How you're doing over time</div>
+    <div class="insight-coach reveal" id="insight-coach"></div>
+    <div class="card reveal" id="insight-chart-card">
+      <div class="card-lbl">Weight vs Calorie Balance</div>
+      <div class="insight-chart-sub" id="insight-chart-sub"></div>
+      <div class="insight-chartwrap"><svg id="insight-chart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg></div>
+      <div class="insight-legend">
+        <span class="ilg ilg-w">Weight</span>
+        <span class="ilg ilg-c">Est. calorie balance</span>
+      </div>
+    </div>
+    <div class="insight-stats" id="insight-stats"></div>
+    <div class="card reveal" id="weight-card">
+      <div class="card-lbl">Weight Log</div>
+      <div class="wt-stats" id="wt-stats"></div>
+      <div class="wt-chartwrap" id="wt-chartwrap"><svg id="wt-chart" viewBox="0 0 320 140" preserveAspectRatio="none"></svg></div>
+      <div class="wt-log">
+        <input type="number" class="finput" id="wt-input" placeholder="Today's weight (kg)" step="0.1" min="20" max="400" style="flex:1">
+        <button class="cal-addbtn" onclick="logWeight()">Log</button>
+      </div>
+      <div id="wt-reminder" class="wt-reminder"></div>
+    </div>
+    <div class="insight-note" id="insight-note">
+      ℹ️ Logged data (food, water, workouts, weight) is shown as recorded. Calorie balance uses the Mifflin-St Jeor formula to estimate your daily burn, so it is an estimate, not an exact measurement. We never claim a specific physical result.
     </div>
   </div>
 
@@ -928,8 +975,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   <nav class="bnav">
     <button class="bni on" onclick="showPage('home')"><span class="bni-icon">🏠</span><span class="bni-lbl">Home</span></button>
     <button class="bni" onclick="showPage('diet')"><span class="bni-icon">🥗</span><span class="bni-lbl">Diet</span></button>
-    <button class="bni" onclick="showPage('habits')"><span class="bni-icon">⚡</span><span class="bni-lbl">Habits</span></button>
     <button class="bni" onclick="showPage('workouts')"><span class="bni-icon">💪</span><span class="bni-lbl">Workouts</span></button>
+    <button class="bni" onclick="showPage('progress')"><span class="bni-icon">📈</span><span class="bni-lbl">Progress</span></button>
     <button class="bni" onclick="showPage('profile')"><span class="bni-icon">👤</span><span class="bni-lbl">Profile</span></button>
     <button class="bni hidden" id="admBtn" onclick="showPage('admin')"><span class="bni-icon">🛡️</span><span class="bni-lbl">Admin</span></button>
   </nav>
@@ -1161,7 +1208,7 @@ async function renderStanding(){
     const target=P.cal_target||calcCalTarget();
     document.getElementById("st-cal").textContent=eaten+" / "+target;
     setArc("st-cal-arc",target?eaten/target:0);
-  }catch(e){console.warn("dash cal exception",e);document.getElementById("st-cal").textContent="—";}
+  }catch(e){console.warn("dash cal exception",e);document.getElementById("st-cal").textContent="n/a";}
   try{
     const{data:wrows,error:we}=await db.from("water_logs").select("glasses").eq("user_id",U.id).eq("log_date",tk);
     if(we)console.warn("dash water read error",we);
@@ -1172,7 +1219,7 @@ async function renderStanding(){
     console.log("DASH water:",{tk,uid:U.id,rows:wrows,glasses,ml,goal});
     document.getElementById("st-water").textContent=(ml/1000).toFixed(1)+" / "+(goal/1000).toFixed(1)+" L";
     setArc("st-water-arc",goal?ml/goal:0);
-  }catch(e){console.warn("dash water exception",e);document.getElementById("st-water").textContent="—";}
+  }catch(e){console.warn("dash water exception",e);document.getElementById("st-water").textContent="n/a";}
   // Weight: latest entry + change
   try{
     const{data:wt}=await db.from("weight_logs").select("weight_kg").eq("user_id",U.id).order("log_date",{ascending:true});
@@ -1281,7 +1328,7 @@ function renderHistWeek(){
   const totalWater=+(HISTDAYS.reduce((s,d)=>s+d.water,0)).toFixed(1);
   const habDaysHit=HISTDAYS.filter(d=>d.hitHab).length;
   document.getElementById("histwk-summary").innerHTML=
-    `<div class="histwk-sumitem"><div class="histwk-sumlbl">Avg Cal</div><div class="histwk-sumval">${avgCal||"—"}</div></div>
+    `<div class="histwk-sumitem"><div class="histwk-sumlbl">Avg Cal</div><div class="histwk-sumval">${avgCal||"0"}</div></div>
      <div class="histwk-sumitem"><div class="histwk-sumlbl">Total Water</div><div class="histwk-sumval">${totalWater} L</div></div>
      <div class="histwk-sumitem"><div class="histwk-sumlbl">Habit Days</div><div class="histwk-sumval">${habDaysHit}/${HISTDAYS.length}</div></div>`;
   document.getElementById("histwk-days").innerHTML=HISTDAYS.map((d,i)=>
@@ -1735,7 +1782,12 @@ function renderProfPage(){
     <div class="info-item"><div class="info-lbl">Activity</div><div class="info-val">${am[P.activity_level]||"N/A"}</div></div>
     <div class="info-item"><div class="info-lbl">Start Date</div><div class="info-val">${P.start_date?fmtDate(new Date(P.start_date)):"Not started"}</div></div>
     <div class="info-item"><div class="info-lbl">Days Done</div><div class="info-val" style="color:var(--acc)">${getDone()}</div></div>`;
-  loadWeight();
+}
+
+// ===== Habit form toggle (Home) =====
+function toggleHabitForm(){
+  const f=document.getElementById("habit-form");
+  if(f)f.classList.toggle("on");
 }
 
 // ===== Weight Tracking =====
@@ -1762,9 +1814,9 @@ function renderWeightStats(){
   if(!el)return;
   if(WEIGHTS.length===0){
     const start=P&&P.weight_kg?P.weight_kg:0;
-    el.innerHTML=`<div class="wt-stat"><div class="wt-stat-lbl">Start</div><div class="wt-stat-val">${start||"—"}</div></div>
-      <div class="wt-stat"><div class="wt-stat-lbl">Current</div><div class="wt-stat-val">${start||"—"}</div></div>
-      <div class="wt-stat"><div class="wt-stat-lbl">Change</div><div class="wt-stat-val">—</div></div>`;
+    el.innerHTML=`<div class="wt-stat"><div class="wt-stat-lbl">Start</div><div class="wt-stat-val">${start||"0"}</div></div>
+      <div class="wt-stat"><div class="wt-stat-lbl">Current</div><div class="wt-stat-val">${start||"0"}</div></div>
+      <div class="wt-stat"><div class="wt-stat-lbl">Change</div><div class="wt-stat-val">0 kg</div></div>`;
     return;
   }
   const start=Number(WEIGHTS[0].weight_kg);
@@ -1784,7 +1836,7 @@ function renderWeightChart(){
     const msg=WEIGHTS.length===0
       ? "Log your weight to start tracking."
       : "One more weigh-in to see your trend.";
-    // Animated sample trend line that loops — previews what their chart will look like
+    // Animated sample trend line that loops, previews what their chart will look like
     wrap.innerHTML=`<div class="wt-empty">
       <svg class="wt-empty-chart" viewBox="0 0 200 70" preserveAspectRatio="none">
         <polyline class="wt-ghost-line" points="5,55 40,48 75,52 110,30 145,34 195,12" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1842,9 +1894,143 @@ async function logWeight(){
     P.weight_kg=v;P.bmi=newBmi;
     inp.value="";
     await loadWeight();
-    renderProfPage();
+    buildInsights();
     showToast("Weight logged!","ok");
   }catch(e){showToast("Could not save: "+e.message,"err");}
+}
+
+// ===== Progress tab: load weight + build insights =====
+async function loadProgress(){
+  await loadWeight();
+  await buildInsights();
+}
+
+async function buildInsights(){
+  if(!P||!U)return;
+  // Use the current Mon–Sun week (reuse history logic data)
+  const mon=startOfWeekMonday(new Date());
+  const days=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);days.push(dateKey(d));}
+  const oldest=days[0],newest=days[6];
+  const calTarget=P.cal_target||calcCalTarget();
+  const waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250);
+  let foods=[],waters=[],habs=[],wks=[],weights=[];
+  try{
+    const[f,w,h,wk,wt]=await Promise.all([
+      db.from("food_logs").select("log_date,calories").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
+      db.from("water_logs").select("log_date,glasses").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
+      db.from("habit_logs").select("date,completed").eq("user_id",U.id).gte("date",oldest).lte("date",newest),
+      db.from("workout_logs").select("log_date").eq("user_id",U.id).gte("log_date",oldest).lte("log_date",newest),
+      db.from("weight_logs").select("log_date,weight_kg").eq("user_id",U.id).order("log_date",{ascending:true})
+    ]);
+    foods=f.data||[];waters=w.data||[];habs=h.data||[];wks=wk.data||[];weights=wt.data||[];
+  }catch(e){console.warn("insights fetch",e);}
+
+  // Per-day calories for the week
+  const dailyCal=days.map(k=>foods.filter(x=>x.log_date===k).reduce((s,x)=>s+Number(x.calories),0));
+  const loggedCalDays=dailyCal.filter(c=>c>0);
+  const avgCal=loggedCalDays.length?Math.round(loggedCalDays.reduce((s,c)=>s+c,0)/loggedCalDays.length):0;
+  const workoutDays=new Set(wks.map(x=>x.log_date)).size;
+  const waterDaysHit=days.filter(k=>{const r=waters.find(x=>x.log_date===k);return r&&Number(r.glasses)>=waterGoalGlasses;}).length;
+  const estBurn=calTarget; // target already = estimated TDEE adjusted for goal
+  const estDeficit=avgCal?Math.round(estBurn-avgCal):0; // positive = deficit
+
+  // Weight change over the week (use weigh-ins within window if available, else overall trend)
+  const weekWeights=weights.filter(x=>x.log_date>=oldest&&x.log_date<=newest);
+  let weightChange=null;
+  if(weekWeights.length>=2){weightChange=+(Number(weekWeights[weekWeights.length-1].weight_kg)-Number(weekWeights[0].weight_kg)).toFixed(1);}
+  else if(weights.length>=2){weightChange=+(Number(weights[weights.length-1].weight_kg)-Number(weights[0].weight_kg)).toFixed(1);}
+
+  renderInsightCoach({avgCal,calTarget,estDeficit,workoutDays,waterDaysHit,weightChange,loggedDays:loggedCalDays.length});
+  renderInsightStats({estDeficit,workoutDays,avgCal,loggedDays:loggedCalDays.length});
+  renderInsightChart(weights,dailyCal,calTarget,days);
+}
+
+function renderInsightCoach(d){
+  const el=document.getElementById("insight-coach");
+  if(!el)return;
+  // Not enough data guard
+  if(d.loggedDays<3){
+    el.innerHTML=`<div class="ic-head"><div class="ic-badge">⚡</div><div class="ic-title">This Week's Coach</div></div>
+      <div class="ic-body">Keep logging to unlock your insights. Log your food, water, and workouts for at least 3 days this week and your personalized summary will appear here.</div>`;
+    el.classList.add("on");return;
+  }
+  // Build truthful sentence
+  let parts=[];
+  if(d.avgCal){
+    if(d.estDeficit>100)parts.push(`You averaged <b>${d.avgCal.toLocaleString()} cal</b> against your ${d.calTarget.toLocaleString()} target, an estimated daily deficit of about ${d.estDeficit} cal`);
+    else if(d.estDeficit<-100)parts.push(`You averaged <b>${d.avgCal.toLocaleString()} cal</b>, an estimated surplus over your ${d.calTarget.toLocaleString()} target`);
+    else parts.push(`You averaged <b>${d.avgCal.toLocaleString()} cal</b>, right around your ${d.calTarget.toLocaleString()} target`);
+  }
+  if(d.workoutDays>0)parts.push(`trained <b>${d.workoutDays}</b> day${d.workoutDays!==1?"s":""}`);
+  if(d.waterDaysHit>0)parts.push(`hit your water goal ${d.waterDaysHit} of 7 days`);
+  let sentence=parts.join(", ")+".";
+  // Honest interpretation only when deficit + weight down line up
+  let verdict="";
+  if(d.weightChange!==null){
+    if(d.weightChange<0&&d.estDeficit>100)verdict=` Your weight is down <b>${Math.abs(d.weightChange)} kg</b>, which is consistent with healthy, sustainable fat loss. Keep this rhythm.`;
+    else if(d.weightChange>0&&d.estDeficit<-100)verdict=` Your weight is up <b>${d.weightChange} kg</b>, in line with the surplus. Good if you're building, worth watching if not.`;
+    else if(d.weightChange===0)verdict=` Your weight is holding steady this week.`;
+    else verdict=` Your weight changed by ${d.weightChange>0?"+":""}${d.weightChange} kg this week.`;
+  }
+  el.innerHTML=`<div class="ic-head"><div class="ic-badge">⚡</div><div class="ic-title">This Week's Coach</div></div>
+    <div class="ic-body">${sentence}${verdict}</div>`;
+  el.classList.add("on");
+}
+
+function renderInsightStats(d){
+  const el=document.getElementById("insight-stats");
+  if(!el)return;
+  const deficitLabel=d.estDeficit>0?"Est. Deficit":(d.estDeficit<0?"Est. Surplus":"Balance");
+  const deficitVal=d.estDeficit?(Math.abs(d.estDeficit)):"0";
+  el.innerHTML=`
+    <div class="ist" data-count="${d.estDeficit?Math.abs(d.estDeficit):0}"><div class="ist-lbl">${deficitLabel}</div><div class="ist-val acc">${deficitVal}</div><div class="ist-sub">cal/day est.</div></div>
+    <div class="ist" data-count="${d.workoutDays}"><div class="ist-lbl">Workouts</div><div class="ist-val amber">${d.workoutDays}</div><div class="ist-sub">this week</div></div>`;
+  // animate the numbers counting up
+  el.querySelectorAll(".ist").forEach(card=>{
+    const target=parseInt(card.getAttribute("data-count"),10)||0;
+    const valEl=card.querySelector(".ist-val");
+    if(!valEl||target===0)return;
+    let cur=0;const steps=20;const inc=target/steps;let i=0;
+    const isDeficit=valEl.classList.contains("acc");
+    const tick=()=>{i++;cur=Math.min(target,Math.round(inc*i));valEl.textContent=cur;if(i<steps)requestAnimationFrame(tick);else valEl.textContent=target;};
+    requestAnimationFrame(tick);
+  });
+}
+
+function renderInsightChart(weights,dailyCal,calTarget,days){
+  const svg=document.getElementById("insight-chart");
+  const sub=document.getElementById("insight-chart-sub");
+  if(!svg)return;
+  if(weights.length<2){
+    svg.innerHTML="";
+    if(sub)sub.textContent="Log your weight at least twice to see how it tracks against your calorie balance.";
+    return;
+  }
+  if(sub)sub.textContent="Your weight trend alongside your estimated daily calorie balance.";
+  const W=320,H=150,padT=14,padB=20,padL=8,padR=8;
+  // weight series (last up-to-14 points)
+  const wpts=weights.slice(-14).map(x=>Number(x.weight_kg));
+  let wmin=Math.min(...wpts),wmax=Math.max(...wpts);if(wmin===wmax){wmin-=1;wmax+=1;}
+  const wx=i=>padL+(i/(wpts.length-1))*(W-padL-padR);
+  const wy=v=>padT+(1-(v-wmin)/(wmax-wmin))*(H-padT-padB);
+  const wline=wpts.map((v,i)=>`${wx(i).toFixed(1)},${wy(v).toFixed(1)}`).join(" ");
+  let wlen=0;{let pa=wpts.map((v,i)=>[wx(i),wy(v)]);for(let i=1;i<pa.length;i++)wlen+=Math.hypot(pa[i][0]-pa[i-1][0],pa[i][1]-pa[i-1][1]);}
+  // calorie balance series for the week (deficit positive => below target)
+  const bal=dailyCal.map(c=>c>0?(calTarget-c):null);
+  const balPts=bal.filter(b=>b!==null);
+  let cline="";
+  if(balPts.length>=2){
+    let bmin=Math.min(...balPts),bmax=Math.max(...balPts);if(bmin===bmax){bmin-=50;bmax+=50;}
+    const cx=i=>padL+(i/(bal.length-1))*(W-padL-padR);
+    const cy=v=>padT+(1-(v-bmin)/(bmax-bmin))*(H-padT-padB);
+    const seg=[];bal.forEach((v,i)=>{if(v!==null)seg.push(`${cx(i).toFixed(1)},${cy(v).toFixed(1)}`);});
+    cline=seg.join(" ");
+  }
+  svg.innerHTML=`
+    ${cline?`<polyline class="ins-cline" points="${cline}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>`:""}
+    <polyline class="ins-wline" style="--len:${wlen.toFixed(0)};stroke-dasharray:${wlen.toFixed(0)};stroke-dashoffset:${wlen.toFixed(0)};" points="${wline}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="${padL}" y="10" font-size="9" fill="var(--t3)">${wmax.toFixed(1)}kg</text>
+    <text x="${padL}" y="${H-8}" font-size="9" fill="var(--t3)">${wmin.toFixed(1)}kg</text>`;
 }
 
 // ===== Workout Logging =====
@@ -2221,12 +2407,13 @@ function showPage(name){
   const pg=document.getElementById("page-"+name);
   pg.classList.remove("hidden");
   pg.classList.add("active");
-  const bmap={home:0,diet:1,habits:2,workouts:3,profile:4,admin:5};
+  const bmap={home:0,diet:1,workouts:2,progress:3,profile:4,admin:5};
   const btns=document.querySelectorAll(".bni");
   if(bmap[name]!==undefined)btns[bmap[name]]?.classList.add("on");
-  if(name==="home")renderStanding();
+  if(name==="home"){renderStanding();loadHabs().then(renderHabs);}
   if(name==="habits"){loadHabs().then(renderHabs);}
   if(name==="workouts")loadWorkouts();
+  if(name==="progress")loadProgress();
   if(name==="admin")loadAdmin();
   if(name==="profile")renderProfPage();
   window.scrollTo(0,0);observeReveal();
@@ -2316,7 +2503,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.01.4";
+const APP_VERSION = "2026.06.02.1";
 
 async function checkForUpdate(){
   try{
@@ -2338,7 +2525,7 @@ async function checkForUpdate(){
         location.reload(true);
       }
     }
-  }catch(e){ /* offline or no version file yet — ignore */ }
+  }catch(e){ /* offline or no version file yet, ignore */ }
 }
 
 checkForUpdate();
