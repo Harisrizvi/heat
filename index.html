@@ -134,6 +134,20 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .gs-body{flex:1;min-width:0;}
 .gs-title{font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:4px;}
 .gs-line{font-size:14px;line-height:1.4;color:var(--t1);}
+.onboard-card{background:linear-gradient(135deg,rgba(200,255,0,0.1),rgba(200,255,0,0.02));border:1px solid rgba(200,255,0,0.3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
+.ob-card-title{font-family:Oswald,sans-serif;font-size:18px;font-weight:600;}
+.ob-card-sub{font-size:12px;color:var(--t3);margin:2px 0 14px;}
+.ob-steps{display:flex;flex-direction:column;gap:8px;}
+.ob-step{display:flex;align-items:center;gap:12px;background:var(--s2);border-radius:var(--rs);padding:12px;cursor:pointer;text-align:left;border:none;width:100%;}
+.ob-step:active{transform:scale(.99);}
+.ob-step.done{opacity:.55;}
+.ob-step-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--s4);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--bg);}
+.ob-step.done .ob-step-check{background:var(--acc);border-color:var(--acc);}
+.ob-step-txt{flex:1;min-width:0;}
+.ob-step-t{font-weight:600;font-size:14px;color:var(--t1);}
+.ob-step.done .ob-step-t{text-decoration:line-through;}
+.ob-step-s{font-size:12px;color:var(--t3);}
+.ob-step-arrow{color:var(--acc);font-size:18px;}
 .hh-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .hh-addbtn{background:var(--s3);border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:600;border-radius:8px;padding:6px 12px;cursor:pointer;}
 .habit-form{display:none;background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;}
@@ -811,6 +825,13 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         </div>
       </div>
     </div>
+    <div class="onboard-card reveal" id="onboard-card" style="display:none">
+      <div class="ob-card-hd">
+        <div class="ob-card-title">Welcome to RITUAL 👋</div>
+        <div class="ob-card-sub">Three quick steps to get started</div>
+      </div>
+      <div class="ob-steps" id="ob-steps"></div>
+    </div>
     <button class="plan-cta reveal" onclick="openPlanModal()"><span class="plan-cta-ico" id="plan-cta-ico">🎯</span><span class="plan-cta-txt"><span class="plan-cta-t" id="plan-cta-title">Choose Your Plan</span><span class="plan-cta-s" id="plan-cta-sub">Pick a goal that fits you</span></span><span class="plan-cta-arrow">›</span></button>
     <div class="standing reveal" id="standing-card">
       <div class="goal-signal" id="goal-signal">
@@ -1322,6 +1343,43 @@ function renderHome(){
   updatePlanCta();
   const hl=document.getElementById("thero-label");
   if(hl)hl.textContent=(P&&P.plan_goal)?(goalShort()+" Plan"):"Today's Mission";
+  renderOnboarding();
+}
+
+// ===== First-use onboarding checklist =====
+async function renderOnboarding(){
+  const card=document.getElementById("onboard-card");
+  if(!card||!P||!U)return;
+  // If user dismissed or completed before, stay hidden
+  if(P.onboarded){card.style.display="none";return;}
+  const tk=todayKey();
+  // Step 1: chose a plan
+  const hasPlan=!!(P&&P.plan_goal);
+  // Step 2: logged any food ever
+  let hasFood=false,hasHabit=HABITS.length>0;
+  try{
+    const{data}=await db.from("food_logs").select("id").eq("user_id",U.id).limit(1);
+    hasFood=!!(data&&data.length);
+  }catch(e){}
+  const steps=[
+    {t:"Pick your plan",s:"Choose a goal that fits you",done:hasPlan,action:"openPlanModal()"},
+    {t:"Log your first meal",s:"Tap to open the Diet tab",done:hasFood,action:"showPage('diet')"},
+    {t:"Add a habit",s:"Build one daily ritual",done:hasHabit,action:"toggleHabitForm()"}
+  ];
+  const allDone=steps.every(s=>s.done);
+  if(allDone){
+    // Mark onboarded so it never shows again
+    card.style.display="none";
+    try{await db.from("profiles").update({onboarded:true}).eq("id",U.id);P.onboarded=true;}catch(e){}
+    return;
+  }
+  card.style.display="";
+  document.getElementById("ob-steps").innerHTML=steps.map(s=>
+    `<button class="ob-step${s.done?' done':''}" onclick="${s.action}">
+      <span class="ob-step-check">${s.done?"✓":""}</span>
+      <span class="ob-step-txt"><span class="ob-step-t">${s.t}</span><span class="ob-step-s">${s.s}</span></span>
+      ${s.done?"":'<span class="ob-step-arrow">›</span>'}
+    </button>`).join("");
 }
 
 // ===== Today's Standing dashboard (modular tiles) =====
@@ -2843,7 +2901,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.3";
+const APP_VERSION = "2026.06.03.4";
 
 async function checkForUpdate(){
   try{
