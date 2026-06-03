@@ -1269,9 +1269,7 @@ async function init(){
 }
 
 async function loadProfile(){
-  console.log("Loading profile for user:", U.id);
   const{data,error}=await db.from("profiles").select("*").eq("id",U.id).single();
-  console.log("Profile result:", {data, error});
   if(error){
     console.error("Profile error:", error.message, error.code);
     // If profile doesn't exist yet, create it
@@ -1280,7 +1278,6 @@ async function loadProfile(){
         id:U.id, email:U.email, status:"approved", is_admin:U.email==="haris28.hr@gmail.com"
       }).select().single();
       if(insErr){console.error("Insert error:",insErr);showScreen("auth");return;}
-      console.log("Created new profile:", newP);
       return loadProfile();
     }
     showScreen("auth");return;
@@ -1344,6 +1341,7 @@ function renderHome(){
   const hl=document.getElementById("thero-label");
   if(hl)hl.textContent=(P&&P.plan_goal)?(goalShort()+" Plan"):"Today's Mission";
   renderOnboarding();
+  loadHabs().then(renderHabs);
 }
 
 // ===== First-use onboarding checklist =====
@@ -2760,7 +2758,6 @@ async function doLogin(){
   const btn=event.currentTarget;btn.disabled=true;btn.textContent="Signing in...";
   try{
     const{data,error}=await db.auth.signInWithPassword({email,password:pass});
-    console.log("Login result:",{data,error});
     btn.disabled=false;btn.textContent="Sign In";
     if(error){err.textContent=error.message;err.style.display="block";return;}
     if(data&&data.user){
@@ -2808,7 +2805,7 @@ function showPage(name){
   const bmap={home:0,diet:1,workouts:2,progress:3,profile:4,admin:5};
   const btns=document.querySelectorAll(".bni");
   if(bmap[name]!==undefined)btns[bmap[name]]?.classList.add("on");
-  if(name==="home"){renderStanding();loadHabs().then(renderHabs);}
+  if(name==="home"){renderHome();}
   if(name==="habits"){loadHabs().then(renderHabs);}
   if(name==="workouts")loadWorkouts();
   if(name==="progress")loadProgress();
@@ -2901,7 +2898,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.4";
+const APP_VERSION = "2026.06.03.5";
 
 async function checkForUpdate(){
   try{
