@@ -120,6 +120,20 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wk-hist-meta{font-size:12px;color:var(--t2);margin-top:3px;}
 .wk-hist-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:14px;}
 .wk-empty{color:var(--t3);font-size:12px;text-align:center;padding:10px;}
+/* Shared empty-state component for consistency across the app */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:24px 16px;text-align:center;color:var(--t3);}
+.empty-state-ico{width:34px;height:34px;color:var(--acc);opacity:.5;animation:esPulse 2.4s ease-in-out infinite;}
+@keyframes esPulse{0%,100%{opacity:.3;transform:translateY(0);}50%{opacity:.6;transform:translateY(-3px);}}
+.empty-state-txt{font-size:13px;line-height:1.45;color:var(--t2);max-width:240px;}
+.goal-signal{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(200,255,0,0.08),rgba(200,255,0,0.02));border:1px solid rgba(200,255,0,0.2);border-radius:var(--rs);padding:14px;margin-bottom:16px;}
+.gs-ring{position:relative;width:72px;height:72px;flex-shrink:0;}
+.gs-ring svg{width:72px;height:72px;}
+.gs-ring-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-weight:700;color:var(--acc);}
+.gs-ring-txt #gs-score{font-size:26px;line-height:1;}
+.gs-ring-of{font-size:12px;color:var(--t3);font-weight:400;}
+.gs-body{flex:1;min-width:0;}
+.gs-title{font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:4px;}
+.gs-line{font-size:14px;line-height:1.4;color:var(--t1);}
 .hh-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .hh-addbtn{background:var(--s3);border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:600;border-radius:8px;padding:6px 12px;cursor:pointer;}
 .habit-form{display:none;background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;}
@@ -799,6 +813,19 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     </div>
     <button class="plan-cta reveal" onclick="openPlanModal()"><span class="plan-cta-ico" id="plan-cta-ico">🎯</span><span class="plan-cta-txt"><span class="plan-cta-t" id="plan-cta-title">Choose Your Plan</span><span class="plan-cta-s" id="plan-cta-sub">Pick a goal that fits you</span></span><span class="plan-cta-arrow">›</span></button>
     <div class="standing reveal" id="standing-card">
+      <div class="goal-signal" id="goal-signal">
+        <div class="gs-ring">
+          <svg viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="30" fill="none" stroke="var(--s3)" stroke-width="6"/>
+            <circle id="gs-arc" cx="36" cy="36" r="30" fill="none" stroke="var(--acc)" stroke-width="6" stroke-linecap="round" stroke-dasharray="188" stroke-dashoffset="188" transform="rotate(-90 36 36)" style="transition:stroke-dashoffset .7s ease"/>
+          </svg>
+          <div class="gs-ring-txt"><span id="gs-score">0</span><span class="gs-ring-of">/<span id="gs-total">4</span></span></div>
+        </div>
+        <div class="gs-body">
+          <div class="gs-title" id="gs-title">Today's progress</div>
+          <div class="gs-line" id="gs-line">Log your day to see how you're tracking.</div>
+        </div>
+      </div>
       <div class="standing-hd">Today's Standing</div>
       <div class="standing-grid" id="standing-grid">
         <div class="stile" onclick="showPage('diet')">
@@ -1101,6 +1128,19 @@ function goalShort(){
   return n.split(" / ")[0];
 }
 
+// Reusable empty-state block. icon is an inline SVG path set; msg is the text.
+function emptyState(msg,iconPaths){
+  const paths=iconPaths||'<polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/>';
+  return `<div class="empty-state">
+    <svg class="empty-state-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>
+    <div class="empty-state-txt">${msg}</div></div>`;
+}
+// Some handy icon path sets
+const ICO_FORK='<path d="M6 3v7a2 2 0 0 0 2 2 2 2 0 0 0 2-2V3"/><path d="M6 13v8"/><path d="M18 3v18"/><path d="M18 9a3 3 0 0 0 0-6"/>';
+const ICO_DUMBBELL='<path d="M6 6v12M18 6v12M3 9v6M21 9v6M6 12h12"/>';
+const ICO_CHECK='<polyline points="20 6 9 17 4 12"/>';
+const ICO_CHART='<polyline points="3 17 9 11 13 15 21 7"/><polyline points="15 7 21 7 21 13"/>';
+
 const DAYS=[
   {d:1,n:"Monday",tg:"tca",tl:"Light Cardio",w:"15 min walk + high knees",wd:"3 sets of 20 high knees after the walk.",mid:"BBQ Salad, United King",din:"Seekh kebab 3 pcs + raita",cheat:false},
   {d:2,n:"Tuesday",tg:"tco",tl:"Core",w:"10 min core circuit",wd:"20 crunches, 20 sec plank, 15 leg raises x2.",mid:"Chicken Tikka Salad, United King",din:"Chicken tikka 4 pcs + 1 roti",cheat:false},
@@ -1304,11 +1344,13 @@ async function renderStanding(){
   setArc("st-hab-arc",totalHab?doneHab/totalHab:0);
   // Calories + water need today's totals from Supabase
   const tk=todayKey();
+  let _eaten=0,_calTarget=P.cal_target||calcCalTarget(),_glasses=0,_waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250),_workedOut=false;
   try{
     const{data:fl,error:fe}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
     if(fe)console.warn("dash food read error",fe);
     const eaten=(fl||[]).reduce((s,f)=>s+Number(f.calories),0);
-    const target=P.cal_target||calcCalTarget();
+    _eaten=eaten;
+    const target=_calTarget;
     document.getElementById("st-cal").textContent=eaten+" / "+target;
     setArc("st-cal-arc",target?eaten/target:0);
   }catch(e){console.warn("dash cal exception",e);document.getElementById("st-cal").textContent="n/a";}
@@ -1317,9 +1359,9 @@ async function renderStanding(){
     if(we)console.warn("dash water read error",we);
     // Use array form (not maybeSingle) so a stray duplicate row can't return null
     const glasses=(wrows&&wrows.length)?Number(wrows[0].glasses):0;
+    _glasses=glasses;
     const ml=glasses*250;
     const goal=P.water_goal_ml||calcWaterGoal();
-    console.log("DASH water:",{tk,uid:U.id,rows:wrows,glasses,ml,goal});
     document.getElementById("st-water").textContent=(ml/1000).toFixed(1)+" / "+(goal/1000).toFixed(1)+" L";
     setArc("st-water-arc",goal?ml/goal:0);
   }catch(e){console.warn("dash water exception",e);document.getElementById("st-water").textContent="n/a";}
@@ -1336,7 +1378,83 @@ async function renderStanding(){
       }else{wEl.textContent=cur+" kg";}
     }else if(wN&&P&&P.weight_kg){wN.textContent=Math.round(P.weight_kg);wEl.textContent=P.weight_kg+" kg";}
   }catch(e){console.warn("dash weight exception",e);}
+  // Workout today?
+  try{
+    const{data:wko}=await db.from("workout_logs").select("id").eq("user_id",U.id).eq("log_date",tk).limit(1);
+    _workedOut=!!(wko&&wko.length);
+  }catch(e){}
+  const totalHab2=HABITS.length;
+  const doneHab2=HABITS.filter(h=>HLOGS[h.id]&&HLOGS[h.id].completed).length;
+  renderGoalSignal({eaten:_eaten,calTarget:_calTarget,glasses:_glasses,waterGoalGlasses:_waterGoalGlasses,workedOut:_workedOut,doneHab:doneHab2,totalHab:totalHab2});
   loadHistWeek();
+}
+
+// ===== Daily Goal Signal (per-goal logic) =====
+function renderGoalSignal(d){
+  const arc=document.getElementById("gs-arc");
+  const scoreEl=document.getElementById("gs-score");
+  const totalEl=document.getElementById("gs-total");
+  const titleEl=document.getElementById("gs-title");
+  const lineEl=document.getElementById("gs-line");
+  if(!arc)return;
+  const goal=activeGoal();
+  // Build the checklist of what counts today, weighted per goal.
+  // Each item: {label, done, key}. The first item is the "primary driver" for the goal.
+  const ateUnder = d.eaten>0 && d.eaten<=d.calTarget;
+  const ateEnough = d.eaten>=d.calTarget*0.95; // for muscle/gain
+  const ateLogged = d.eaten>0;
+  const hitWater = d.glasses>=d.waterGoalGlasses && d.glasses>0;
+  const didWorkout = d.workedOut;
+  const hitHabits = d.totalHab>0 && d.doneHab>=d.totalHab;
+
+  let items=[];
+  switch(goal.id){
+    case "fatloss":
+      items=[{l:"Ate within target",done:ateUnder},{l:"Worked out",done:didWorkout},{l:"Hit water goal",done:hitWater}];
+      break;
+    case "muscle":
+      items=[{l:"Ate enough to grow",done:ateEnough},{l:"Worked out",done:didWorkout},{l:"Hit water goal",done:hitWater}];
+      break;
+    case "strength":
+      items=[{l:"Trained today",done:didWorkout},{l:"Ate enough",done:ateEnough},{l:"Hit water goal",done:hitWater}];
+      break;
+    case "circuit":
+    case "crossfit":
+      items=[{l:"Trained today",done:didWorkout},{l:"Logged food",done:ateLogged},{l:"Hit water goal",done:hitWater}];
+      break;
+    default: // beginner / get fit: consistency over numbers
+      items=[{l:"Logged food",done:ateLogged},{l:"Hit water goal",done:hitWater},{l:"Worked out",done:didWorkout}];
+  }
+  // Only count habits if the user actually has habits set
+  if(d.totalHab>0)items.push({l:"Habits done",done:hitHabits});
+  const total=items.length;
+  const score=items.filter(i=>i.done).length;
+  // Has the user logged anything at all today?
+  const anyActivity = d.eaten>0||d.glasses>0||d.workedOut||d.doneHab>0;
+
+  totalEl.textContent=total;
+  // ring fill
+  const C=188;
+  arc.style.strokeDashoffset=C*(1-score/total);
+  if(!anyActivity){
+    scoreEl.textContent="0";
+    titleEl.textContent=goalShort()+" goal";
+    lineEl.textContent="Log your day to see how you're tracking toward your goal.";
+    return;
+  }
+  scoreEl.textContent=score;
+  titleEl.textContent="Today toward "+goalShort().toLowerCase();
+  // Truthful, encouraging one-liner based on score
+  const primary=items[0];
+  let line="";
+  if(score===total)line="Perfect day. Everything that moves you toward your "+goalShort().toLowerCase()+" goal is done.";
+  else if(score===0)line="You've started logging. Tick off "+primary.l.toLowerCase()+" to move toward your goal.";
+  else{
+    const undone=items.filter(i=>!i.done).map(i=>i.l.toLowerCase());
+    if(primary.done)line="Strong: your key driver ("+primary.l.toLowerCase()+") is done. Still open: "+undone.join(", ")+".";
+    else line="Good start. Your biggest lever today is "+primary.l.toLowerCase()+".";
+  }
+  lineEl.textContent=line;
 }
 
 // ===== History: Mon–Sun weeks with nav + custom range =====
@@ -1661,7 +1779,7 @@ function renderFoodLog(){
   arc.style.strokeDashoffset=326.7*(1-frac);
   arc.classList.toggle("cal-arc-over",total>CALTARGET);
   const log=document.getElementById("food-log");
-  if(FOODLOG.length===0){log.innerHTML='<div style="color:var(--t3);font-size:12px;text-align:center;padding:8px;">No food logged yet today.</div>';return;}
+  if(FOODLOG.length===0){log.innerHTML=emptyState("No food logged yet today. Add your first meal above.",ICO_FORK);return;}
   log.innerHTML=FOODLOG.map(f=>`<div class="food-log-item"><span>${escapeHtml(f.name)}${f.qty&&f.qty!=1?' ×'+f.qty:''}</span><span class="fl-cal">${f.calories} cal</span><button class="food-log-del" onclick="delFood('${f.id}')">✕</button></div>`).join("");
 }
 
@@ -1841,7 +1959,7 @@ async function genDiet(){
 
 function renderHabs(){
   const el=document.getElementById("hablist");
-  if(!HABITS.length){el.innerHTML="<div style=\"text-align:center;padding:32px;color:var(--t3);font-size:13px;\">No habits yet. Add your first one above.</div>";return;}
+  if(!HABITS.length){el.innerHTML=emptyState("No habits yet. Add your first one above to start building your routine.",ICO_CHECK);return;}
   el.innerHTML=HABITS.map(h=>{
     const done=HLOGS[h.id]&&HLOGS[h.id].completed;
     return`<div class="hab-card"><div class="hab-col" style="background:${h.color}"></div><div class="hab-info"><div class="hab-name">${h.habit_name}</div><div class="hab-freq">${h.frequency}</div></div><div class="hab-chk ${done?"done":""}" onclick="toggleHab('${h.id}')"></div></div>`;
@@ -2214,12 +2332,16 @@ function renderInsightStats(d){
 function renderInsightChart(weights,dailyCal,calTarget,days){
   const svg=document.getElementById("insight-chart");
   const sub=document.getElementById("insight-chart-sub");
-  if(!svg)return;
+  const wrap=svg?svg.parentElement:document.querySelector(".insight-chartwrap");
+  if(!wrap)return;
   if(weights.length<2){
-    svg.innerHTML="";
-    if(sub)sub.textContent="Log your weight at least twice to see how it tracks against your calorie balance.";
+    if(sub)sub.textContent="Once you log a couple of weigh-ins, your trend appears here.";
+    wrap.innerHTML=emptyState("Log your weight at least twice on this page to see how it tracks against your calorie balance.",ICO_CHART);
     return;
   }
+  // ensure the svg exists (it may have been replaced by an empty state before)
+  wrap.innerHTML='<svg id="insight-chart" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>';
+  const svg2=document.getElementById("insight-chart");
   if(sub)sub.textContent="Your weight trend alongside your estimated daily calorie balance.";
   const W=320,H=150,padT=14,padB=20,padL=8,padR=8;
   // weight series (last up-to-14 points)
@@ -2240,7 +2362,7 @@ function renderInsightChart(weights,dailyCal,calTarget,days){
     const seg=[];bal.forEach((v,i)=>{if(v!==null)seg.push(`${cx(i).toFixed(1)},${cy(v).toFixed(1)}`);});
     cline=seg.join(" ");
   }
-  svg.innerHTML=`
+  svg2.innerHTML=`
     ${cline?`<polyline class="ins-cline" points="${cline}" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="4 3" opacity="0.85"/>`:""}
     <polyline class="ins-wline" style="--len:${wlen.toFixed(0)};stroke-dasharray:${wlen.toFixed(0)};stroke-dashoffset:${wlen.toFixed(0)};" points="${wline}" fill="none" stroke="var(--acc)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
     <text x="${padL}" y="10" font-size="9" fill="var(--t3)">${wmax.toFixed(1)}kg</text>
@@ -2349,7 +2471,7 @@ async function loadWkHistory(){
   if(!el)return;
   try{
     const{data}=await db.from("workout_logs").select("*").eq("user_id",U.id).order("log_date",{ascending:false}).limit(15);
-    if(!data||data.length===0){el.innerHTML='<div class="wk-empty">No workouts logged yet. Log your first one above!</div>';return;}
+    if(!data||data.length===0){el.innerHTML=emptyState("No workouts logged yet. Log your first session above.",ICO_DUMBBELL);return;}
     el.innerHTML=data.map(w=>{
       let meta="";
       if(w.exercises){
@@ -2721,7 +2843,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.1";
+const APP_VERSION = "2026.06.03.3";
 
 async function checkForUpdate(){
   try{
