@@ -100,6 +100,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wt-dot{opacity:0;animation:wtDotPop .35s ease forwards;}
 @keyframes wtDotPop{from{opacity:0;}to{opacity:1;}}
 .plan-today{border:1px solid rgba(200,255,0,0.25);}
+.plan-risknote{background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;font-size:12px;line-height:1.45;border-radius:var(--rs);padding:10px;margin-bottom:12px;}
 .plan-today-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
 .plan-today-lbl{font-size:11px;color:var(--acc);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
 .plan-today-title{font-family:Oswald,sans-serif;font-size:19px;font-weight:600;margin-top:2px;}
@@ -110,6 +111,9 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .plan-item:active{transform:scale(.99);}
 .plan-item-name{font-weight:600;font-size:14px;color:var(--t1);}
 .plan-item-detail{font-size:12px;color:var(--t3);margin-top:2px;}
+.plan-vid{display:inline-block;margin-top:6px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.plan-vid-on{background:rgba(200,255,0,0.15);color:var(--acc);}
+.plan-vid-soon{background:var(--s3);color:var(--t3);}
 .plan-item-vico{color:var(--acc);font-size:16px;}
 .plan-rest{text-align:center;color:var(--t3);font-size:13px;padding:14px;background:var(--s2);border-radius:var(--rs);}
 .plan-est{display:flex;gap:8px;font-size:11px;color:var(--t3);line-height:1.5;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:10px;}
@@ -1176,16 +1180,16 @@ const PLAN_TRACKS=[
    lengths:[30,60,90],risk:"low",status:"ready"},
   {id:"muscle",name:"Weight Gain / Muscle",icon:"💪",tagline:"Build size and strength",
    desc:"Progressive resistance training focused on compound movements and gradual overload, paired with a calorie surplus. Built for steady muscle growth.",
-   lengths:[30,60,90],risk:"low",status:"soon"},
+   lengths:[30,60,90],risk:"low",status:"ready"},
   {id:"strength",name:"Weightlifting / Strength",icon:"🏋️",tagline:"Get stronger on the big lifts",
    desc:"Structured strength training using compound lifts and proven progression. Form and technique come first. Best paired with guidance when going heavy.",
-   lengths:[30,60,90],risk:"medium",status:"soon"},
+   lengths:[30,60,90],risk:"medium",status:"ready"},
   {id:"circuit",name:"Circuit Training",icon:"⚡",tagline:"Conditioning and endurance",
    desc:"Timed circuits that build cardiovascular fitness and muscular endurance. Scalable work and rest intervals for any level.",
-   lengths:[30,60,90],risk:"low",status:"soon"},
+   lengths:[30,60,90],risk:"low",status:"ready"},
   {id:"crossfit",name:"CrossFit Style",icon:"🤸",tagline:"High intensity functional training",
    desc:"High intensity functional movements. Safe and effective when scaled to your level and learned with proper coaching. We follow the principle: mechanics first, then consistency, then intensity. This track is best done with a qualified coach.",
-   lengths:[30,60,90],risk:"high",status:"soon"}
+   lengths:[30,60,90],risk:"high",status:"ready"}
 ];
 
 // Single source of truth for the user's active goal (defaults to beginner journey)
@@ -1216,18 +1220,42 @@ const EXERCISE_LIB={
   jumpingjack:{name:"Jumping Jacks",muscle:"Full body, cardio",cue:"Steady rhythm, low impact option is to step side to side instead of jumping.",videoUrl:""},
   burpee:{name:"Burpee (scalable)",muscle:"Full body, cardio",cue:"Squat, hands down, step or jump back to plank, return, stand. Step back instead of jumping to scale.",videoUrl:""},
   walk:{name:"Brisk Walk / Zone 2 Cardio",muscle:"Cardio",cue:"Conversational pace where you can still talk. Aim for steady effort, not exhaustion.",videoUrl:""},
-  intervals:{name:"Cardio Intervals",muscle:"Cardio",cue:"Alternate harder effort with easy recovery (for example 30 seconds hard, 60 seconds easy). Scale by keeping efforts short.",videoUrl:""}
+  intervals:{name:"Cardio Intervals",muscle:"Cardio",cue:"Alternate harder effort with easy recovery (for example 30 seconds hard, 60 seconds easy). Scale by keeping efforts short.",videoUrl:""},
+  // Strength lifts (barbell)
+  backsquat:{name:"Barbell Back Squat",muscle:"Legs, glutes",cue:"Bar on upper back, brace, sit down and back to depth, drive up. Use a rack with safety pins. Form before load.",videoUrl:""},
+  benchpress:{name:"Barbell Bench Press",muscle:"Chest, shoulders, triceps",cue:"Shoulder blades back, controlled descent to chest, press up. Use a spotter or safety pins.",videoUrl:""},
+  deadlift:{name:"Barbell Deadlift",muscle:"Back, glutes, hamstrings",cue:"Flat back, bar over mid-foot, push the floor away, stand tall. Stop if the lower back rounds.",videoUrl:""},
+  barbellrow:{name:"Barbell Row",muscle:"Back, biceps",cue:"Hinge forward, flat back, pull bar to lower ribs, control down.",videoUrl:""},
+  barbellohp:{name:"Barbell Overhead Press",muscle:"Shoulders, triceps",cue:"Brace hard, press overhead without leaning back, lock out, lower under control.",videoUrl:""},
+  // Muscle isolation
+  curl:{name:"Dumbbell Biceps Curl",muscle:"Biceps",cue:"Elbows fixed, curl with control, no swinging, full range.",videoUrl:""},
+  triceps:{name:"Triceps Extension",muscle:"Triceps",cue:"Keep elbows still, extend fully, control the return.",videoUrl:""},
+  latraise:{name:"Lateral Raise",muscle:"Shoulders",cue:"Slight elbow bend, raise to shoulder height, lead with elbows, lower slowly.",videoUrl:""},
+  legpress:{name:"Leg Press",muscle:"Legs, glutes",cue:"Feet shoulder-width, lower under control, do not lock knees hard at the top.",videoUrl:""},
+  pulldown:{name:"Lat Pulldown",muscle:"Back, biceps",cue:"Pull the bar to upper chest, squeeze the back, control the bar up.",videoUrl:""},
+  // Circuit / functional
+  jumprope:{name:"Jump Rope",muscle:"Cardio, calves",cue:"Small jumps, wrists turn the rope. Step over the rope to scale.",videoUrl:""},
+  stepup:{name:"Step-Up",muscle:"Legs, glutes",cue:"Full foot on the box, drive through the heel, control down. Lower box to scale.",videoUrl:""},
+  kbswing:{name:"Kettlebell Swing",muscle:"Glutes, hamstrings, back",cue:"Hip hinge, snap hips to swing to chest height, not a squat. Flat back throughout.",videoUrl:""},
+  situp:{name:"Sit-Up / Crunch",muscle:"Core",cue:"Controlled, do not yank the neck, exhale up.",videoUrl:""},
+  highknees:{name:"High Knees",muscle:"Cardio, legs",cue:"Drive knees up at a steady pace. March in place to scale.",videoUrl:""},
+  // CrossFit-style (scalable)
+  airsquat:{name:"Air Squat",muscle:"Legs, glutes",cue:"Bodyweight squat to depth, chest up, controlled. The foundation movement, master it first.",videoUrl:""},
+  ringrow:{name:"Ring Row (pull-up scale)",muscle:"Back, biceps",cue:"Lean back on rings or a bar, pull chest to hands, body straight. A scaled pull-up.",videoUrl:""},
+  boxstepover:{name:"Box Step-Over (box jump scale)",muscle:"Legs, cardio",cue:"Step up and over the box. Use instead of jumping to protect knees and Achilles.",videoUrl:""},
+  wallball:{name:"Wall Ball (scalable)",muscle:"Legs, shoulders",cue:"Squat, then throw the ball to a target, catch and repeat. Lighter ball or no ball to scale.",videoUrl:""}
 };
 
 // ===== Fat Loss Plan (data-driven, rebuild-friendly) =====
 // Built from the cited research dossier. Structured as a repeating weekly
 // template so it is easy to revise when trainer data arrives.
 // Each strength item: {ex: key into EXERCISE_LIB, sets, reps, rest}.
-// Sessions repeat weekly; the plan scales by length (30/60/90) via week count.
-const FATLOSS_PLAN={
+// PLANS is keyed by goal id. Each plan is fully data-driven and editable.
+const PLANS={
+ fatloss:{
   goal:"fatloss",
-  summary:"Resistance training to protect muscle, conditioning to support the deficit, and a moderate calorie focus. Built from recognized guidelines. Calorie figures are estimates.",
-  estimate:"Aim for a moderate deficit of roughly 500 calories per day under your estimated maintenance, for about 0.5 to 1 kg per week. Adjust if losing faster.",
+  summary:"Resistance training to protect muscle, conditioning to support the deficit, and a moderate calorie focus.",
+  estimate:"Aim for a moderate deficit of roughly 500 calories per day under your estimated maintenance, for about 0.5 to 1 kg per week. Adjust if losing faster. This is an estimate.",
   week:[
     {day:"Mon",type:"strength",title:"Full Body Strength A",note:"Compound focus. Rest 45 to 90 seconds between sets.",
      items:[{ex:"squat",sets:3,reps:"10-12",rest:"60s"},{ex:"pushup",sets:3,reps:"8-12",rest:"60s"},{ex:"row",sets:3,reps:"10-12",rest:"60s"},{ex:"plank",sets:3,reps:"30-45s",rest:"45s"}]},
@@ -1244,7 +1272,88 @@ const FATLOSS_PLAN={
   ],
   progression:"Each week, aim to add a rep or a little load where last week felt easy (no more than about 10 percent). In 60 and 90 day plans, take a lighter week roughly every 5 to 6 weeks.",
   safety:"Consult a professional before starting. Warm up before and cool down after. Stop if you feel sharp pain, dizziness, or are unwell. This is general guidance, not medical advice."
+ },
+ muscle:{
+  goal:"muscle",
+  summary:"Progressive resistance training, each major muscle trained about twice a week, with a modest calorie surplus.",
+  estimate:"Eat a modest surplus of roughly 200 to 500 calories per day over your estimated maintenance, aiming for about 0.25 to 0.5 kg per week. Larger surpluses mainly add fat. This is an estimate.",
+  week:[
+    {day:"Mon",type:"strength",title:"Upper Body",note:"Rest about 2 minutes between hard sets. Train near, not to, failure.",
+     items:[{ex:"benchpress",sets:3,reps:"6-10",rest:"2 min"},{ex:"barbellrow",sets:3,reps:"8-12",rest:"2 min"},{ex:"barbellohp",sets:3,reps:"8-12",rest:"2 min"},{ex:"curl",sets:3,reps:"10-12",rest:"90s"},{ex:"triceps",sets:3,reps:"10-12",rest:"90s"}]},
+    {day:"Tue",type:"strength",title:"Lower Body",note:"Rest about 2 to 3 minutes on the big lifts.",
+     items:[{ex:"backsquat",sets:3,reps:"6-10",rest:"3 min"},{ex:"hinge",sets:3,reps:"8-12",rest:"2 min"},{ex:"legpress",sets:3,reps:"10-12",rest:"2 min"},{ex:"glutebridge",sets:3,reps:"12-15",rest:"90s"}]},
+    {day:"Wed",type:"rest",title:"Rest",note:"Recovery and light walking.",items:[]},
+    {day:"Thu",type:"strength",title:"Upper Body",note:"Aim to beat last week by a rep or a little load.",
+     items:[{ex:"pulldown",sets:3,reps:"8-12",rest:"2 min"},{ex:"benchpress",sets:3,reps:"6-10",rest:"2 min"},{ex:"latraise",sets:3,reps:"12-15",rest:"60s"},{ex:"curl",sets:3,reps:"10-12",rest:"90s"},{ex:"triceps",sets:3,reps:"10-12",rest:"90s"}]},
+    {day:"Fri",type:"strength",title:"Lower Body",note:"Form first, then load.",
+     items:[{ex:"backsquat",sets:3,reps:"6-10",rest:"3 min"},{ex:"deadlift",sets:1,reps:"5",rest:"3 min"},{ex:"lunge",sets:3,reps:"10 each leg",rest:"90s"},{ex:"situp",sets:3,reps:"12-15",rest:"60s"}]},
+    {day:"Sat",type:"rest",title:"Rest or Light Cardio",note:"Optional easy cardio for health.",items:[{ex:"walk",sets:1,reps:"20-30 min",rest:"-"}]},
+    {day:"Sun",type:"rest",title:"Rest",note:"Full rest.",items:[]}
+  ],
+  progression:"Use double progression: add reps within the range, then add a little load once you hit the top of the range with good form. Aim for about 10 sets per muscle each week. Recalculate your surplus every 4 to 6 weeks.",
+  safety:"Consult a professional before starting. Prioritize form over load. Train near failure, not to failure every set. Warm up and cool down. Stop on sharp pain. General guidance, not medical advice."
+ },
+ circuit:{
+  goal:"circuit",
+  summary:"Timed circuits that build conditioning and muscular endurance. Alternates muscle groups with short rest.",
+  estimate:"Circuits support general fitness and a calorie deficit if fat loss is also a goal. Any calorie figures are estimates.",
+  week:[
+    {day:"Mon",type:"circuit",title:"Full Body Circuit",note:"5 stations, 40s work / 20s rest, 3 rounds, rest 2 min between rounds. Scale rest up as needed.",
+     items:[{ex:"squat",sets:3,reps:"40s",rest:"20s"},{ex:"pushup",sets:3,reps:"40s",rest:"20s"},{ex:"jumprope",sets:3,reps:"40s",rest:"20s"},{ex:"row",sets:3,reps:"40s",rest:"20s"},{ex:"plank",sets:3,reps:"40s",rest:"2 min"}]},
+    {day:"Tue",type:"rest",title:"Rest or Walk",note:"Active recovery.",items:[{ex:"walk",sets:1,reps:"20-30 min",rest:"-"}]},
+    {day:"Wed",type:"circuit",title:"Conditioning Circuit",note:"6 stations, 30s work / 30s rest, 3 to 4 rounds.",
+     items:[{ex:"stepup",sets:4,reps:"30s",rest:"30s"},{ex:"highknees",sets:4,reps:"30s",rest:"30s"},{ex:"lunge",sets:4,reps:"30s",rest:"30s"},{ex:"mountainclimber",sets:4,reps:"30s",rest:"30s"},{ex:"situp",sets:4,reps:"30s",rest:"30s"},{ex:"jumpingjack",sets:4,reps:"30s",rest:"30s"}]},
+    {day:"Thu",type:"rest",title:"Rest",note:"Recovery matters.",items:[]},
+    {day:"Fri",type:"circuit",title:"Strength Circuit",note:"5 stations, moderate load, 12 to 15 reps, 30s rest between stations, 3 rounds.",
+     items:[{ex:"kbswing",sets:3,reps:"15",rest:"30s"},{ex:"glutebridge",sets:3,reps:"15",rest:"30s"},{ex:"row",sets:3,reps:"12",rest:"30s"},{ex:"pushup",sets:3,reps:"12",rest:"30s"},{ex:"plank",sets:3,reps:"45s",rest:"2 min"}]},
+    {day:"Sat",type:"cardio",title:"Optional Cardio",note:"Easy steady session.",items:[{ex:"walk",sets:1,reps:"30 min",rest:"-"}]},
+    {day:"Sun",type:"rest",title:"Rest",note:"Full rest.",items:[]}
+  ],
+  progression:"Progress one variable at a time: add a round, lengthen work intervals, shorten rest, or add a little load. Benefits build after about 20 sessions at 3 times per week.",
+  safety:"Consult a professional before starting. Form before speed. Scale rest up if you are new or carrying excess weight. Warm up and cool down. Stop on sharp pain. General guidance, not medical advice."
+ },
+ strength:{
+  goal:"strength",
+  summary:"Novice linear progression on compound barbell lifts. Technique comes first, load second.",
+  estimate:"Strength training needs at least maintenance calories, often a slight surplus, to recover and progress. Estimates only.",
+  riskNote:"Higher-risk track. Prioritize technique over weight. Get coaching or video-check your form, especially as loads climb. Olympic lifts are best learned with a qualified coach and are not included here.",
+  week:[
+    {day:"Mon",type:"strength",title:"Workout A",note:"Add a little weight only if last session's reps were clean. Rest 2 to 5 minutes between heavy sets.",
+     items:[{ex:"backsquat",sets:3,reps:"5",rest:"3-5 min"},{ex:"benchpress",sets:3,reps:"5",rest:"3 min"},{ex:"barbellrow",sets:3,reps:"5",rest:"3 min"}]},
+    {day:"Tue",type:"rest",title:"Rest",note:"Recovery between heavy sessions.",items:[]},
+    {day:"Wed",type:"strength",title:"Workout B",note:"Deadlift is one heavy set of 5. Stop if your lower back rounds.",
+     items:[{ex:"backsquat",sets:3,reps:"5",rest:"3-5 min"},{ex:"barbellohp",sets:3,reps:"5",rest:"3 min"},{ex:"deadlift",sets:1,reps:"5",rest:"-"}]},
+    {day:"Thu",type:"rest",title:"Rest",note:"Recovery.",items:[]},
+    {day:"Fri",type:"strength",title:"Workout A",note:"Alternate A and B each session across the week.",
+     items:[{ex:"backsquat",sets:3,reps:"5",rest:"3-5 min"},{ex:"benchpress",sets:3,reps:"5",rest:"3 min"},{ex:"barbellrow",sets:3,reps:"5",rest:"3 min"}]},
+    {day:"Sat",type:"rest",title:"Rest or Light Walk",note:"Optional easy movement.",items:[{ex:"walk",sets:1,reps:"20-30 min",rest:"-"}]},
+    {day:"Sun",type:"rest",title:"Rest",note:"Full rest.",items:[]}
+  ],
+  progression:"Add about 2.5 kg to lower-body lifts and 1.25 kg to upper-body lifts each session while form holds. When you stall on the same lift for several sessions despite full rest, that is the signal to switch to an intermediate program.",
+  safety:"Higher-risk track. Consult a professional and strongly consider coaching for the barbell lifts. Always use collars and a rack with safety pins or a spotter. Warm up thoroughly. Technique over load, always. Stop on sharp pain. General guidance, not medical advice."
+ },
+ crossfit:{
+  goal:"crossfit",
+  summary:"Constantly varied functional movements at scalable intensity. Built around the principle: mechanics first, then consistency, then intensity.",
+  estimate:"Eat to support training and recovery. Any calorie figures are estimates.",
+  riskNote:"Highest-risk track. Scale every movement to your level and pace yourself. This style is best done with a qualified coach. Olympic lifting is not included here and should be learned in person.",
+  week:[
+    {day:"Mon",type:"crossfit",title:"AMRAP 15 (bodyweight)",note:"As many rounds as possible in 15 minutes. Pace so the first rounds feel almost easy. Scale reps down to keep moving with good form.",
+     items:[{ex:"airsquat",sets:1,reps:"10",rest:"-"},{ex:"pushup",sets:1,reps:"8",rest:"-"},{ex:"situp",sets:1,reps:"10",rest:"-"}]},
+    {day:"Tue",type:"rest",title:"Rest or Light Walk",note:"Recovery.",items:[{ex:"walk",sets:1,reps:"20-30 min",rest:"-"}]},
+    {day:"Wed",type:"crossfit",title:"Strength + EMOM",note:"Build squat technique, then every minute on the minute for 10 minutes. EMOM builds in rest, good for pacing.",
+     items:[{ex:"airsquat",sets:5,reps:"5",rest:"as needed"},{ex:"kbswing",sets:10,reps:"10 (EMOM)",rest:"rest of minute"},{ex:"ringrow",sets:10,reps:"6 (EMOM)",rest:"rest of minute"}]},
+    {day:"Thu",type:"rest",title:"Rest or Mobility",note:"Active recovery, stretching.",items:[]},
+    {day:"Fri",type:"crossfit",title:"Scaled WOD for Time",note:"Complete the work, scaling movements and reps. Stop if technique breaks down or breathing gets chaotic.",
+     items:[{ex:"boxstepover",sets:1,reps:"30",rest:"-"},{ex:"wallball",sets:1,reps:"20",rest:"-"},{ex:"ringrow",sets:1,reps:"15",rest:"-"}]},
+    {day:"Sat",type:"rest",title:"Rest or Fun Activity",note:"Walk, sport, or play.",items:[]},
+    {day:"Sun",type:"rest",title:"Rest",note:"Full rest.",items:[]}
+  ],
+  progression:"Deconditioned beginners start 2 days a week for the first 2 weeks, then build to 3. Progress one variable at a time after 2 to 4 weeks. Consistency beats intensity. Scale everything.",
+  safety:"Highest-risk track. Consult a professional and strongly prefer in-person coaching. Scale every movement. Stop signals: form breaks down, sharp pain, chaotic breathing, or needing far longer rest than work. Avoid going all-out early. General guidance, not medical advice."
+ }
 };
+const FATLOSS_PLAN=PLANS.fatloss; // back-compat reference
 
 // Reusable empty-state block. icon is an inline SVG path set; msg is the text.
 function emptyState(msg,iconPaths){
@@ -2550,15 +2659,14 @@ function renderPlanCard(){
   const el=document.getElementById("wk-plan-card");
   if(!el)return;
   const goal=activeGoal();
-  // Only Fat Loss has built content so far
-  if(!(P&&P.plan_goal==="fatloss")){el.innerHTML="";return;}
-  const plan=FATLOSS_PLAN;
-  // figure out today's session by weekday
+  const plan=(P&&P.plan_goal)?PLANS[P.plan_goal]:null;
+  if(!plan){el.innerHTML="";return;}
   const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const todayName=dn[new Date().getDay()];
   const todaySession=plan.week.find(d=>d.day===todayName)||plan.week[0];
   el.innerHTML=`
     <div class="plan-today card reveal">
+      ${plan.riskNote?`<div class="plan-risknote">⚠ ${plan.riskNote}</div>`:""}
       <div class="plan-today-hd">
         <div>
           <div class="plan-today-lbl">${goal.icon} ${goalShort()} Plan · Today (${todaySession.day})</div>
@@ -2578,19 +2686,24 @@ function renderSessionItems(session){
   }
   return `<div class="plan-items">`+session.items.map(it=>{
     const ex=EXERCISE_LIB[it.ex]||{name:it.ex,cue:"",videoUrl:""};
+    const vidBadge=ex.videoUrl
+      ? `<span class="plan-vid plan-vid-on">▶ Video</span>`
+      : `<span class="plan-vid plan-vid-soon">🎬 Video soon</span>`;
     return `<button class="plan-item" onclick="openExercise('${it.ex}')">
       <div class="plan-item-main">
         <div class="plan-item-name">${ex.name}</div>
         <div class="plan-item-detail">${it.sets} x ${it.reps}${it.rest&&it.rest!=="-"?" · rest "+it.rest:""}</div>
+        ${vidBadge}
       </div>
-      <span class="plan-item-vico">${ex.videoUrl?"▶":"›"}</span>
+      <span class="plan-item-vico">›</span>
     </button>`;
   }).join("")+`</div>`;
 }
 
 // Full-week plan modal
 function openPlanWeek(){
-  const plan=FATLOSS_PLAN;
+  const plan=(P&&P.plan_goal)?PLANS[P.plan_goal]:null;
+  if(!plan)return;
   const body=plan.week.map(d=>`
     <div class="plan-day">
       <div class="plan-day-hd"><span class="plan-day-name">${d.day}</span><span class="plan-day-title">${d.title}</span></div>
@@ -3072,7 +3185,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.6";
+const APP_VERSION = "2026.06.03.7";
 
 async function checkForUpdate(){
   try{
