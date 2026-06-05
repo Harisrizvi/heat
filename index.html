@@ -99,6 +99,31 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 @keyframes wtFade{from{opacity:0;}to{opacity:.1;}}
 .wt-dot{opacity:0;animation:wtDotPop .35s ease forwards;}
 @keyframes wtDotPop{from{opacity:0;}to{opacity:1;}}
+.plan-today{border:1px solid rgba(200,255,0,0.25);}
+.plan-today-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.plan-today-lbl{font-size:11px;color:var(--acc);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.plan-today-title{font-family:Oswald,sans-serif;font-size:19px;font-weight:600;margin-top:2px;}
+.plan-week-btn{background:var(--s3);border:1px solid var(--s4);color:var(--t1);font-size:11px;border-radius:8px;padding:6px 10px;cursor:pointer;white-space:nowrap;}
+.plan-today-note{font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.4;}
+.plan-items{display:flex;flex-direction:column;gap:8px;}
+.plan-item{display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:none;border-radius:var(--rs);padding:12px;cursor:pointer;text-align:left;width:100%;}
+.plan-item:active{transform:scale(.99);}
+.plan-item-name{font-weight:600;font-size:14px;color:var(--t1);}
+.plan-item-detail{font-size:12px;color:var(--t3);margin-top:2px;}
+.plan-item-vico{color:var(--acc);font-size:16px;}
+.plan-rest{text-align:center;color:var(--t3);font-size:13px;padding:14px;background:var(--s2);border-radius:var(--rs);}
+.plan-est{display:flex;gap:8px;font-size:11px;color:var(--t3);line-height:1.5;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:10px;}
+.plan-day{margin-bottom:16px;}
+.plan-day-hd{display:flex;gap:10px;align-items:baseline;margin-bottom:8px;}
+.plan-day-name{font-family:Oswald,sans-serif;font-weight:700;color:var(--acc);width:38px;}
+.plan-day-title{font-weight:600;font-size:14px;}
+.plan-week-foot{font-size:12px;color:var(--t2);line-height:1.5;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:12px;}
+.plan-week-foot b{color:var(--t1);}
+.ex-modal-video{margin-bottom:14px;}
+.ex-video-soon{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:160px;background:var(--s2);border-radius:10px;color:var(--t3);font-size:13px;}
+.ex-video-soon span{font-size:32px;opacity:.6;}
+.ex-modal-cue-lbl{font-family:Oswald,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:6px;}
+.ex-modal-cue{font-size:14px;line-height:1.6;color:var(--t1);}
 .wk-mode{display:flex;gap:8px;margin-bottom:14px;}
 .wk-modebtn{flex:1;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:10px;font-weight:600;cursor:pointer;font-size:13px;}
 .wk-modebtn.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
@@ -677,6 +702,31 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 <canvas id="bgc"></canvas>
 <div id="toast" class="toast"></div>
 
+<div id="plan-week-modal" class="plan-modal">
+  <div class="plan-modal-inner">
+    <div class="plan-modal-hd">
+      <div class="plan-modal-title" id="plan-week-title">Weekly Plan</div>
+      <button class="plan-modal-close" onclick="closePlanWeek()">✕</button>
+    </div>
+    <div id="plan-week-body"></div>
+  </div>
+</div>
+
+<div id="ex-modal" class="plan-modal">
+  <div class="plan-modal-inner">
+    <div class="plan-modal-hd">
+      <div>
+        <div class="plan-modal-title" id="ex-modal-title">Exercise</div>
+        <div class="plan-modal-sub" id="ex-modal-muscle"></div>
+      </div>
+      <button class="plan-modal-close" onclick="closeExercise()">✕</button>
+    </div>
+    <div id="ex-modal-video" class="ex-modal-video"></div>
+    <div class="ex-modal-cue-lbl">How to do it</div>
+    <div id="ex-modal-cue" class="ex-modal-cue"></div>
+  </div>
+</div>
+
 <div id="plan-modal" class="plan-modal">
   <div class="plan-modal-inner">
     <div class="plan-modal-hd">
@@ -1020,6 +1070,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   <div class="page hidden" id="page-workouts">
     <div class="pg-title" id="wk-title">Workouts</div>
     <div class="pg-sub" id="wk-sub">Log today's training</div>
+    <div id="wk-plan-card"></div>
     <div class="wk-mode">
       <button class="wk-modebtn on" id="wk-mode-quick" onclick="wkSetMode('quick')">Quick Log</button>
       <button class="wk-modebtn" id="wk-mode-detail" onclick="wkSetMode('detail')">Detailed</button>
@@ -1122,7 +1173,7 @@ const PLAN_TRACKS=[
    lengths:[40],risk:"low",status:"ready"},
   {id:"fatloss",name:"Fat Loss",icon:"🔥",tagline:"Lose fat, keep your strength",
    desc:"Mixes resistance training with conditioning and a calorie focus. Based on the principle that fat loss comes mostly from a sustainable calorie deficit plus consistent training.",
-   lengths:[30,60,90],risk:"low",status:"soon"},
+   lengths:[30,60,90],risk:"low",status:"ready"},
   {id:"muscle",name:"Weight Gain / Muscle",icon:"💪",tagline:"Build size and strength",
    desc:"Progressive resistance training focused on compound movements and gradual overload, paired with a calorie surplus. Built for steady muscle growth.",
    lengths:[30,60,90],risk:"low",status:"soon"},
@@ -1148,6 +1199,52 @@ function goalShort(){
   const n=activeGoal().name;
   return n.split(" / ")[0];
 }
+
+// ===== Exercise Library (video-ready; videoUrl filled in later) =====
+// Each exercise is a data entry. videoUrl is empty for now; dropping in a
+// non-copyrighted/AI demo clip later requires no code change, only data.
+const EXERCISE_LIB={
+  squat:{name:"Bodyweight Squat",muscle:"Legs, glutes",cue:"Feet shoulder-width, sit back and down, chest up, knees tracking over toes.",videoUrl:""},
+  pushup:{name:"Push-Up",muscle:"Chest, shoulders, triceps",cue:"Hands under shoulders, body in a straight line, lower with control, full range. Drop to knees to scale.",videoUrl:""},
+  row:{name:"Dumbbell Row",muscle:"Back, biceps",cue:"Hinge at hips, flat back, pull the weight to your hip, squeeze, lower slowly.",videoUrl:""},
+  lunge:{name:"Reverse Lunge",muscle:"Legs, glutes",cue:"Step back, lower until both knees about 90 degrees, push through the front heel to stand.",videoUrl:""},
+  ohp:{name:"Overhead Press",muscle:"Shoulders, triceps",cue:"Brace core, press weight overhead without leaning back, lower under control.",videoUrl:""},
+  plank:{name:"Plank",muscle:"Core",cue:"Forearms under shoulders, body straight, brace the core, do not let hips sag.",videoUrl:""},
+  hinge:{name:"Hip Hinge / Romanian Deadlift",muscle:"Hamstrings, glutes, back",cue:"Soft knees, push hips back, flat back, feel the hamstrings, stand tall.",videoUrl:""},
+  glutebridge:{name:"Glute Bridge",muscle:"Glutes, hamstrings",cue:"Lie on back, drive hips up squeezing glutes, pause, lower slowly.",videoUrl:""},
+  mountainclimber:{name:"Mountain Climbers",muscle:"Full body, cardio",cue:"Plank position, drive knees toward chest alternately at a steady pace.",videoUrl:""},
+  jumpingjack:{name:"Jumping Jacks",muscle:"Full body, cardio",cue:"Steady rhythm, low impact option is to step side to side instead of jumping.",videoUrl:""},
+  burpee:{name:"Burpee (scalable)",muscle:"Full body, cardio",cue:"Squat, hands down, step or jump back to plank, return, stand. Step back instead of jumping to scale.",videoUrl:""},
+  walk:{name:"Brisk Walk / Zone 2 Cardio",muscle:"Cardio",cue:"Conversational pace where you can still talk. Aim for steady effort, not exhaustion.",videoUrl:""},
+  intervals:{name:"Cardio Intervals",muscle:"Cardio",cue:"Alternate harder effort with easy recovery (for example 30 seconds hard, 60 seconds easy). Scale by keeping efforts short.",videoUrl:""}
+};
+
+// ===== Fat Loss Plan (data-driven, rebuild-friendly) =====
+// Built from the cited research dossier. Structured as a repeating weekly
+// template so it is easy to revise when trainer data arrives.
+// Each strength item: {ex: key into EXERCISE_LIB, sets, reps, rest}.
+// Sessions repeat weekly; the plan scales by length (30/60/90) via week count.
+const FATLOSS_PLAN={
+  goal:"fatloss",
+  summary:"Resistance training to protect muscle, conditioning to support the deficit, and a moderate calorie focus. Built from recognized guidelines. Calorie figures are estimates.",
+  estimate:"Aim for a moderate deficit of roughly 500 calories per day under your estimated maintenance, for about 0.5 to 1 kg per week. Adjust if losing faster.",
+  week:[
+    {day:"Mon",type:"strength",title:"Full Body Strength A",note:"Compound focus. Rest 45 to 90 seconds between sets.",
+     items:[{ex:"squat",sets:3,reps:"10-12",rest:"60s"},{ex:"pushup",sets:3,reps:"8-12",rest:"60s"},{ex:"row",sets:3,reps:"10-12",rest:"60s"},{ex:"plank",sets:3,reps:"30-45s",rest:"45s"}]},
+    {day:"Tue",type:"cardio",title:"Zone 2 Cardio",note:"Steady, conversational pace.",
+     items:[{ex:"walk",sets:1,reps:"30-40 min",rest:"-"}]},
+    {day:"Wed",type:"strength",title:"Full Body Strength B",note:"Compound focus. Rest 45 to 90 seconds between sets.",
+     items:[{ex:"hinge",sets:3,reps:"10-12",rest:"60s"},{ex:"ohp",sets:3,reps:"8-12",rest:"60s"},{ex:"lunge",sets:3,reps:"10 each leg",rest:"60s"},{ex:"glutebridge",sets:3,reps:"12-15",rest:"45s"}]},
+    {day:"Thu",type:"rest",title:"Rest or Light Walk",note:"Recovery matters. An easy walk is fine.",items:[]},
+    {day:"Fri",type:"strength",title:"Full Body Strength A",note:"Repeat of A, aim to add a rep or a little load if last time felt easy.",
+     items:[{ex:"squat",sets:3,reps:"10-12",rest:"60s"},{ex:"pushup",sets:3,reps:"8-12",rest:"60s"},{ex:"row",sets:3,reps:"10-12",rest:"60s"},{ex:"plank",sets:3,reps:"30-45s",rest:"45s"}]},
+    {day:"Sat",type:"cardio",title:"Intervals or Zone 2",note:"Optional intervals for time efficiency, or steady cardio. Not on back-to-back hard days.",
+     items:[{ex:"intervals",sets:1,reps:"15-20 min",rest:"-"}]},
+    {day:"Sun",type:"rest",title:"Rest",note:"Full rest. Let your body adapt.",items:[]}
+  ],
+  progression:"Each week, aim to add a rep or a little load where last week felt easy (no more than about 10 percent). In 60 and 90 day plans, take a lighter week roughly every 5 to 6 weeks.",
+  safety:"Consult a professional before starting. Warm up before and cool down after. Stop if you feel sharp pain, dizziness, or are unwell. This is general guidance, not medical advice."
+};
 
 // Reusable empty-state block. icon is an inline SVG path set; msg is the text.
 function emptyState(msg,iconPaths){
@@ -2442,10 +2539,87 @@ async function loadWorkouts(){
   const ws=document.getElementById("wk-sub");
   if(wt)wt.textContent=(P&&P.plan_goal)?goalShort()+" Training":"Workouts";
   if(ws)ws.textContent=(P&&P.plan_goal)?("Training that supports your "+goalShort().toLowerCase()+" goal"):"Log today's training";
+  renderPlanCard();
   wkSetMode(WK_MODE);
   renderWkExercises();
   await loadWkHistory();
 }
+
+// Render the active plan (currently Fat Loss has real content)
+function renderPlanCard(){
+  const el=document.getElementById("wk-plan-card");
+  if(!el)return;
+  const goal=activeGoal();
+  // Only Fat Loss has built content so far
+  if(!(P&&P.plan_goal==="fatloss")){el.innerHTML="";return;}
+  const plan=FATLOSS_PLAN;
+  // figure out today's session by weekday
+  const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const todayName=dn[new Date().getDay()];
+  const todaySession=plan.week.find(d=>d.day===todayName)||plan.week[0];
+  el.innerHTML=`
+    <div class="plan-today card reveal">
+      <div class="plan-today-hd">
+        <div>
+          <div class="plan-today-lbl">${goal.icon} ${goalShort()} Plan · Today (${todaySession.day})</div>
+          <div class="plan-today-title">${todaySession.title}</div>
+        </div>
+        <button class="plan-week-btn" onclick="openPlanWeek()">Full week</button>
+      </div>
+      ${todaySession.note?`<div class="plan-today-note">${todaySession.note}</div>`:""}
+      ${renderSessionItems(todaySession)}
+      <div class="plan-est"><span class="plan-est-ico">ℹ️</span> ${plan.estimate}</div>
+    </div>`;
+}
+
+function renderSessionItems(session){
+  if(!session.items||!session.items.length){
+    return `<div class="plan-rest">Rest day. Recovery is part of the plan.</div>`;
+  }
+  return `<div class="plan-items">`+session.items.map(it=>{
+    const ex=EXERCISE_LIB[it.ex]||{name:it.ex,cue:"",videoUrl:""};
+    return `<button class="plan-item" onclick="openExercise('${it.ex}')">
+      <div class="plan-item-main">
+        <div class="plan-item-name">${ex.name}</div>
+        <div class="plan-item-detail">${it.sets} x ${it.reps}${it.rest&&it.rest!=="-"?" · rest "+it.rest:""}</div>
+      </div>
+      <span class="plan-item-vico">${ex.videoUrl?"▶":"›"}</span>
+    </button>`;
+  }).join("")+`</div>`;
+}
+
+// Full-week plan modal
+function openPlanWeek(){
+  const plan=FATLOSS_PLAN;
+  const body=plan.week.map(d=>`
+    <div class="plan-day">
+      <div class="plan-day-hd"><span class="plan-day-name">${d.day}</span><span class="plan-day-title">${d.title}</span></div>
+      ${renderSessionItems(d)}
+    </div>`).join("");
+  document.getElementById("plan-week-title").textContent=goalShort()+" Plan · Weekly";
+  document.getElementById("plan-week-body").innerHTML=body+
+    `<div class="plan-week-foot"><b>Progression.</b> ${plan.progression}</div>
+     <div class="plan-week-foot"><b>Safety.</b> ${plan.safety}</div>`;
+  document.getElementById("plan-week-modal").classList.add("on");
+}
+function closePlanWeek(){document.getElementById("plan-week-modal").classList.remove("on");}
+
+// Exercise detail (video-ready)
+function openExercise(key){
+  const ex=EXERCISE_LIB[key];
+  if(!ex)return;
+  document.getElementById("ex-modal-title").textContent=ex.name;
+  document.getElementById("ex-modal-muscle").textContent=ex.muscle||"";
+  const vid=document.getElementById("ex-modal-video");
+  if(ex.videoUrl){
+    vid.innerHTML=`<video src="${ex.videoUrl}" controls playsinline style="width:100%;border-radius:10px;"></video>`;
+  }else{
+    vid.innerHTML=`<div class="ex-video-soon"><span>🎬</span><div>Exercise video coming soon</div></div>`;
+  }
+  document.getElementById("ex-modal-cue").textContent=ex.cue||"";
+  document.getElementById("ex-modal").classList.add("on");
+}
+function closeExercise(){document.getElementById("ex-modal").classList.remove("on");}
 
 function wkExSearch(){
   const q=document.getElementById("wk-ex-search").value.trim().toLowerCase();
@@ -2898,7 +3072,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.5";
+const APP_VERSION = "2026.06.03.6";
 
 async function checkForUpdate(){
   try{
