@@ -117,6 +117,12 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .plan-item-vico{color:var(--acc);font-size:16px;}
 .plan-rest{text-align:center;color:var(--t3);font-size:13px;padding:14px;background:var(--s2);border-radius:var(--rs);}
 .plan-est{display:flex;gap:8px;font-size:11px;color:var(--t3);line-height:1.5;margin-top:12px;background:var(--s2);border-radius:var(--rs);padding:10px;}
+.plan-done-btn{width:100%;background:var(--acc);color:var(--bg);border:none;border-radius:var(--rs);padding:13px;font-weight:700;font-size:14px;cursor:pointer;margin-top:12px;}
+.plan-done-btn:active{transform:scale(.99);}
+.plan-done-row{margin-top:12px;text-align:center;font-size:13px;padding:11px;border-radius:var(--rs);}
+.plan-done-row.done{background:rgba(61,214,140,0.12);color:#3dd68c;font-weight:600;}
+.plan-done-tick{font-weight:700;}
+.plan-restday{color:var(--t3);}
 .plan-day{margin-bottom:16px;}
 .plan-day-hd{display:flex;gap:10px;align-items:baseline;margin-bottom:8px;}
 .plan-day-name{font-family:Oswald,sans-serif;font-weight:700;color:var(--acc);width:38px;}
@@ -309,6 +315,10 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .field{margin-bottom:14px;}
 .flabel{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:5px;}
 .finput{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:var(--rs);color:var(--t1);font-family:Inter,sans-serif;font-size:14px;padding:10px 13px;outline:none;transition:border-color .2s;}
+.pw-wrap{position:relative;display:flex;align-items:center;}
+.pw-wrap .finput{padding-right:62px;}
+.pw-toggle{position:absolute;right:8px;background:none;border:none;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;padding:6px 8px;}
+.pw-toggle:active{opacity:.6;}
 .finput:focus{border-color:rgba(200,255,0,.4);}
 .finput::placeholder{color:var(--t3);}
 .btn-full{width:100%;background:var(--acc);color:var(--bg);font-family:Oswald,sans-serif;font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:13px;border-radius:var(--rs);border:none;cursor:pointer;transition:all .2s;margin-top:6px;}
@@ -772,8 +782,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div class="auth-title">Welcome back</div>
       <div class="auth-sub">Sign in to continue your journey</div>
       <div class="field"><label class="flabel">Email</label><input type="email" class="finput" id="le" placeholder="your@email.com"></div>
-      <div class="field"><label class="flabel">Password</label><input type="password" class="finput" id="lp" placeholder="Password"></div>
-      <button class="btn-full" onclick="doLogin()">Sign In</button>
+      <div class="field"><label class="flabel">Password</label><div class="pw-wrap"><input type="password" class="finput" id="lp" placeholder="Password"><button type="button" class="pw-toggle" onclick="togglePw('lp',this)" aria-label="Show password">Show</button></div></div>
+      <button class="btn-full" onclick="doLogin(this)">Sign In</button>
       <div class="aerr" id="lerr"></div>
     </div>
     <div id="sf" class="hidden">
@@ -781,8 +791,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <div class="auth-sub">Create your account. Admin approval required before access.</div>
       <div class="field"><label class="flabel">Full Name</label><input type="text" class="finput" id="sn" placeholder="Your full name"></div>
       <div class="field"><label class="flabel">Email</label><input type="email" class="finput" id="se" placeholder="your@email.com"></div>
-      <div class="field"><label class="flabel">Password</label><input type="password" class="finput" id="sp" placeholder="Min 6 characters"></div>
-      <button class="btn-full" onclick="doSignup()">Create Account</button>
+      <div class="field"><label class="flabel">Password</label><div class="pw-wrap"><input type="password" class="finput" id="sp" placeholder="Min 8 chars, 1 capital, 1 number"><button type="button" class="pw-toggle" onclick="togglePw('sp',this)" aria-label="Show password">Show</button></div></div>
+      <button class="btn-full" onclick="doSignup(this)">Create Account</button>
       <div class="aerr" id="serr"></div>
       <div class="asucc" id="ssucc"></div>
     </div>
@@ -1610,7 +1620,7 @@ async function renderStanding(){
   try{
     const{data:fl,error:fe}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
     if(fe)console.warn("dash food read error",fe);
-    const eaten=(fl||[]).reduce((s,f)=>s+Number(f.calories),0);
+    const eaten=(fl||[]).reduce((s,f)=>s+(Number(f.calories)||0),0);
     _eaten=eaten;
     const target=_calTarget;
     document.getElementById("st-cal").textContent=eaten+" / "+target;
@@ -1773,7 +1783,7 @@ async function loadHistWeek(){
   const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const tk=todayKey();
   HISTDAYS=days.map(d=>{
-    const cal=foods.filter(x=>x.log_date===d.key).reduce((s,x)=>s+Number(x.calories),0);
+    const cal=foods.filter(x=>x.log_date===d.key).reduce((s,x)=>s+(Number(x.calories)||0),0);
     const wrow=waters.find(x=>x.log_date===d.key);
     const glasses=wrow?Number(wrow.glasses):0;
     const habDone=habs.filter(x=>x.date===d.key&&x.completed).length;
@@ -2004,9 +2014,10 @@ function calcCalTarget(){
   let bmr=10*w+6.25*h-5*a+(male?5:-161);
   const mult={sedentary:1.2,light:1.375,moderate:1.55,very_active:1.725};
   let tdee=bmr*(mult[P.activity_level]||1.2);
-  const goal=P.goal||"";
-  if(goal.includes("lose"))tdee-=400;        // deficit for fat loss
-  else if(goal.includes("muscle"))tdee+=250; // surplus for muscle
+  // Goal can come from the chosen plan (newer) or the onboarding goal (older).
+  const goal=((P.plan_goal||"")+" "+(P.goal||"")).toLowerCase();
+  if(goal.includes("fatloss")||goal.includes("lose"))tdee-=500;      // ~500/day deficit (CDC, Mayo)
+  else if(goal.includes("muscle")||goal.includes("gain"))tdee+=300;  // modest surplus 200-500/day (research)
   return Math.round(tdee/10)*10;
 }
 
@@ -2031,7 +2042,7 @@ async function loadCalTracker(){
 }
 
 function renderFoodLog(){
-  const total=FOODLOG.reduce((s,f)=>s+Number(f.calories),0);
+  const total=FOODLOG.reduce((s,f)=>s+(Number(f.calories)||0),0);
   document.getElementById("cal-eaten").textContent=total;
   document.getElementById("cal-target").textContent=CALTARGET;
   const left=CALTARGET-total;
@@ -2520,7 +2531,7 @@ async function buildInsights(){
   }catch(e){console.warn("insights fetch",e);}
 
   // Per-day calories for the week
-  const dailyCal=days.map(k=>foods.filter(x=>x.log_date===k).reduce((s,x)=>s+Number(x.calories),0));
+  const dailyCal=days.map(k=>foods.filter(x=>x.log_date===k).reduce((s,x)=>s+(Number(x.calories)||0),0));
   const loggedCalDays=dailyCal.filter(c=>c>0);
   const avgCal=loggedCalDays.length?Math.round(loggedCalDays.reduce((s,c)=>s+c,0)/loggedCalDays.length):0;
   const workoutDays=new Set(wks.map(x=>x.log_date)).size;
@@ -2655,7 +2666,7 @@ async function loadWorkouts(){
 }
 
 // Render the active plan (currently Fat Loss has real content)
-function renderPlanCard(){
+async function renderPlanCard(){
   const el=document.getElementById("wk-plan-card");
   if(!el)return;
   const goal=activeGoal();
@@ -2664,6 +2675,22 @@ function renderPlanCard(){
   const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const todayName=dn[new Date().getDay()];
   const todaySession=plan.week.find(d=>d.day===todayName)||plan.week[0];
+  const isRest=!todaySession.items||!todaySession.items.length;
+  // Has today's plan session already been logged? (match by the plan-session name)
+  const planWorkoutName=goalShort()+": "+todaySession.title;
+  let alreadyDone=false;
+  try{
+    const{data}=await db.from("workout_logs").select("id").eq("user_id",U.id).eq("log_date",todayKey()).eq("name",planWorkoutName).limit(1);
+    alreadyDone=!!(data&&data.length);
+  }catch(e){}
+  let actionHtml="";
+  if(isRest){
+    actionHtml=`<div class="plan-done-row"><span class="plan-restday">Rest day. Nothing to log.</span></div>`;
+  }else if(alreadyDone){
+    actionHtml=`<div class="plan-done-row done"><span class="plan-done-tick">✓</span> Logged today. Great work.</div>`;
+  }else{
+    actionHtml=`<button class="plan-done-btn" onclick="markPlanSessionDone()">Mark this session done</button>`;
+  }
   el.innerHTML=`
     <div class="plan-today card reveal">
       ${plan.riskNote?`<div class="plan-risknote">⚠ ${plan.riskNote}</div>`:""}
@@ -2676,8 +2703,34 @@ function renderPlanCard(){
       </div>
       ${todaySession.note?`<div class="plan-today-note">${todaySession.note}</div>`:""}
       ${renderSessionItems(todaySession)}
+      ${actionHtml}
       <div class="plan-est"><span class="plan-est-ico">ℹ️</span> ${plan.estimate}</div>
     </div>`;
+}
+
+// Log today's plan session as a workout so it flows into history, streak, and goal signal
+async function markPlanSessionDone(){
+  const plan=(P&&P.plan_goal)?PLANS[P.plan_goal]:null;
+  if(!plan)return;
+  const dn=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const todayName=dn[new Date().getDay()];
+  const session=plan.week.find(d=>d.day===todayName)||plan.week[0];
+  if(!session.items||!session.items.length){showToast("Today is a rest day.","ok");return;}
+  const name=goalShort()+": "+session.title;
+  // build an exercises payload from the session items (re-using the workout_logs schema)
+  const exercises=session.items.map(it=>{
+    const ex=EXERCISE_LIB[it.ex]||{name:it.ex};
+    return {name:ex.name,sets:it.sets,reps:it.reps,weight:"",duration:""};
+  });
+  try{
+    const{error}=await db.from("workout_logs").insert({
+      user_id:U.id,log_date:todayKey(),name,duration_min:null,exercises:JSON.stringify(exercises)
+    });
+    if(error)throw error;
+    showToast("Session logged! It counts toward your goal.","ok");
+    await renderPlanCard();
+    await loadWkHistory();
+  }catch(e){showToast("Could not log session. Try again.","err");}
 }
 
 function renderSessionItems(session){
@@ -2957,9 +3010,9 @@ function setUnit(unit){
     document.getElementById("oh").placeholder="170";
   }else{
     document.getElementById("wlabel").textContent="Weight (lbs)";
-    document.getElementById("hlabel").textContent="Height (ft)";
+    document.getElementById("hlabel").textContent="Height (total inches)";
     document.getElementById("ow").placeholder="154";
-    document.getElementById("oh").placeholder="5.9";
+    document.getElementById("oh").placeholder="69 (= 5 ft 9 in)";
   }
   document.getElementById("ow").value="";
   document.getElementById("oh").value="";
@@ -2972,7 +3025,7 @@ function calcBMI(){
   let wKg=wRaw,hCm=hRaw,hM=hRaw/100;
   if(currentUnit==="imperial"){
     wKg=wRaw*0.453592;
-    hCm=hRaw*30.48;
+    hCm=hRaw*2.54;
     hM=hCm/100;
   }
   if(hM<=0)return;
@@ -2996,9 +3049,12 @@ function goStep(from,to){
   }
   if(from===3&&!ACT){showToast("Please select activity level","err");return;}
   if(to===4){
-    const w=parseFloat(document.getElementById("ow").value);
-    const h=parseFloat(document.getElementById("oh").value)/100;
-    const bmi=w/(h*h);
+    const wRaw=parseFloat(document.getElementById("ow").value);
+    const hRaw=parseFloat(document.getElementById("oh").value);
+    let wKg=wRaw,hCm=hRaw;
+    if(currentUnit==="imperial"){wKg=wRaw*0.453592;hCm=hRaw*2.54;}
+    const hM=hCm/100;
+    const bmi=wKg/(hM*hM);
     const gm={lose_fat:"Lose Fat",build_muscle:"Build Muscle",get_fit:"Get Fit",gym_ready:"Gym Ready"};
     const am={sedentary:"Sedentary",light:"Lightly Active",moderate:"Moderately Active",very_active:"Very Active"};
     document.getElementById("ob-sum").innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
@@ -3017,7 +3073,7 @@ async function finishOb(){
   const wRaw=parseFloat(document.getElementById("ow").value);
   const hRaw=parseFloat(document.getElementById("oh").value);
   let wKg=wRaw,hCm=hRaw;
-  if(currentUnit==="imperial"){wKg=wRaw*0.453592;hCm=hRaw*30.48;}
+  if(currentUnit==="imperial"){wKg=wRaw*0.453592;hCm=hRaw*2.54;}
   const hM=hCm/100;
   const bmi=wKg/(hM*hM);
   const{error}=await db.from("profiles").update({
@@ -3037,28 +3093,38 @@ function switchTab(tab){
   document.getElementById("pf").classList.add("hidden");
 }
 
-async function doLogin(){
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  if(!inp)return;
+  if(inp.type==="password"){inp.type="text";btn.textContent="Hide";}
+  else{inp.type="password";btn.textContent="Show";}
+}
+
+async function doLogin(btn){
+  btn=btn||document.querySelector('#lf .btn-full');
   const email=document.getElementById("le").value.trim();
   const pass=document.getElementById("lp").value;
   const err=document.getElementById("lerr");err.style.display="none";
   if(!email||!pass){err.textContent="Please fill in all fields";err.style.display="block";return;}
-  const btn=event.currentTarget;btn.disabled=true;btn.textContent="Signing in...";
+  if(btn){btn.disabled=true;btn.textContent="Signing in...";}
   try{
     const{data,error}=await db.auth.signInWithPassword({email,password:pass});
-    btn.disabled=false;btn.textContent="Sign In";
+    if(btn){btn.disabled=false;btn.textContent="Sign In";}
     if(error){err.textContent=error.message;err.style.display="block";return;}
     if(data&&data.user){
       U=data.user;
       await loadProfile();
+    }else{
+      err.textContent="Sign in did not complete. Please try again.";err.style.display="block";
     }
   }catch(e){
-    console.error("Login exception:",e);
-    btn.disabled=false;btn.textContent="Sign In";
-    err.textContent="Connection error: "+e.message;err.style.display="block";
+    if(btn){btn.disabled=false;btn.textContent="Sign In";}
+    err.textContent="Connection error. Please check your internet and try again.";err.style.display="block";
   }
 }
 
-async function doSignup(){
+async function doSignup(btn){
+  btn=btn||document.querySelector('#sf .btn-full');
   const name=document.getElementById("sn").value.trim();
   const email=document.getElementById("se").value.trim();
   const pass=document.getElementById("sp").value;
@@ -3068,12 +3134,17 @@ async function doSignup(){
   if(pass.length<8){err.textContent="Password must be at least 8 characters";err.style.display="block";return;}
   if(!/[A-Z]/.test(pass)){err.textContent="Password must contain at least one uppercase letter";err.style.display="block";return;}
   if(!/[0-9]/.test(pass)){err.textContent="Password must contain at least one number";err.style.display="block";return;}
-  const btn=event.currentTarget;btn.disabled=true;btn.textContent="Creating account...";
-  const{data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
-  btn.disabled=false;btn.textContent="Create Account";
-  if(error){err.textContent=error.message;err.style.display="block";return;}
-  if(data.user)await db.from("profiles").update({full_name:name}).eq("id",data.user.id);
-  suc.textContent="Account created! Please wait for admin approval before you can sign in.";suc.style.display="block";
+  if(btn){btn.disabled=true;btn.textContent="Creating account...";}
+  try{
+    const{data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+    if(btn){btn.disabled=false;btn.textContent="Create Account";}
+    if(error){err.textContent=error.message;err.style.display="block";return;}
+    if(data.user)await db.from("profiles").update({full_name:name}).eq("id",data.user.id);
+    suc.textContent="Account created! Please wait for admin approval before you can sign in.";suc.style.display="block";
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent="Create Account";}
+    err.textContent="Connection error. Please check your internet and try again.";err.style.display="block";
+  }
 }
 
 async function doLogout(){await db.auth.signOut();U=null;P=null;PROG={};HABITS=[];showScreen("auth");}
@@ -3185,7 +3256,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.03.7";
+const APP_VERSION = "2026.06.04.1";
 
 async function checkForUpdate(){
   try{
