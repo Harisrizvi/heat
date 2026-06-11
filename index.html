@@ -17,7 +17,7 @@
   --re:#ff4f4f;--re2:rgba(255,79,79,0.1);--re3:rgba(255,79,79,0.2);
   --pu:#b794f4;--pu2:rgba(183,148,244,0.1);
   --gr:#3dd68c;--gr2:rgba(61,214,140,0.1);
-  --r:14px;--rs:9px;--pill:999px;
+  --r:14px;--rl:14px;--rs:9px;--pill:999px;
 }
 html{scroll-behavior:smooth;background:var(--bg);}
 body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none;}
@@ -3256,7 +3256,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.04.1";
+const APP_VERSION = "2026.06.04.2";
 
 async function checkForUpdate(){
   try{
