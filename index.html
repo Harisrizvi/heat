@@ -1643,7 +1643,7 @@ async function renderStanding(){
   setArc("st-hab-arc",totalHab?doneHab/totalHab:0);
   // Calories + water need today's totals from Supabase
   const tk=todayKey();
-  let _eaten=0,_calTarget=P.cal_target||calcCalTarget(),_glasses=0,_waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250),_workedOut=false;
+  let _eaten=0,_calTarget=effectiveCalTarget(),_glasses=0,_waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250),_workedOut=false;
   try{
     const{data:fl,error:fe}=await db.from("food_logs").select("calories").eq("user_id",U.id).eq("log_date",tk);
     if(fe)console.warn("dash food read error",fe);
@@ -1793,7 +1793,7 @@ async function loadHistWeek(){
   if(!P||!U)return;
   const days=histRangeDays();
   const oldest=days[0].key, newest=days[days.length-1].key;
-  const calTarget=P.cal_target||calcCalTarget();
+  const calTarget=effectiveCalTarget();
   const waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250);
   const habTotal=(typeof HABITS!=="undefined"&&HABITS.length)?HABITS.length:0;
   let foods=[],waters=[],habs=[];
@@ -2034,18 +2034,44 @@ const FOOD_DB=[
 ];
 let FOODLOG=[],CALTARGET=2000,foodPicked=null;
 
-function calcCalTarget(){
-  // Mifflin-St Jeor BMR x activity, adjusted for goal
+function calcBMR(){
   const w=P.weight_kg||70,h=P.height_cm||170,a=P.age||30;
   const male=(P.gender||"male")!=="female";
-  let bmr=10*w+6.25*h-5*a+(male?5:-161);
+  return 10*w+6.25*h-5*a+(male?5:-161);
+}
+// The lowest calorie target the app will ever recommend or store, for the
+// user's safety. Based on BMR (never recommend eating below resting needs),
+// with an absolute floor as a backstop. This guardrail mirrors what credible
+// nutrition apps enforce: a deficit should not push intake into unsafe territory.
+function safeCalFloor(){
+  const bmr=Math.round(calcBMR());
+  const male=(P.gender||"male")!=="female";
+  const absolute=male?1500:1200; // recognized general minimums
+  return Math.max(bmr,absolute);
+}
+function calcCalTarget(){
+  // Mifflin-St Jeor BMR x activity, adjusted for goal, then clamped to a safe floor.
+  const bmr=calcBMR();
   const mult={sedentary:1.2,light:1.375,moderate:1.55,very_active:1.725};
   let tdee=bmr*(mult[P.activity_level]||1.2);
-  // Goal can come from the chosen plan (newer) or the onboarding goal (older).
   const goal=((P.plan_goal||"")+" "+(P.goal||"")).toLowerCase();
   if(goal.includes("fatloss")||goal.includes("lose"))tdee-=500;      // ~500/day deficit (CDC, Mayo)
   else if(goal.includes("muscle")||goal.includes("gain"))tdee+=300;  // modest surplus 200-500/day (research)
-  return Math.round(tdee/10)*10;
+  let target=Math.round(tdee/10)*10;
+  // never recommend below the safe floor
+  const floor=safeCalFloor();
+  if(target<floor)target=Math.round(floor/10)*10;
+  return target;
+}
+// The effective target the app uses everywhere: an intentional custom value if
+// the user explicitly set one (and it is at or above the safe floor), else the
+// calculated recommendation. A stale stored value with no "custom" flag is
+// ignored in favor of the fresh calculation (fixes legacy bad values).
+function effectiveCalTarget(){
+  if(P.cal_target_custom && P.cal_target){
+    return Math.max(Number(P.cal_target), safeCalFloor());
+  }
+  return calcCalTarget();
 }
 
 function dateKey(d){
@@ -2059,7 +2085,7 @@ function todayKey(){
 
 async function loadCalTracker(){
   // target: stored override, else calculated
-  CALTARGET = P.cal_target || calcCalTarget();
+  CALTARGET = effectiveCalTarget();
   document.getElementById("cal-target").textContent=CALTARGET;
   try{
     const{data}=await db.from("food_logs").select("*").eq("user_id",U.id).eq("log_date",todayKey()).order("created_at",{ascending:true});
@@ -2133,16 +2159,33 @@ async function delFood(id){
 
 async function editCalTarget(){
   const cur=CALTARGET;
-  const val=prompt("Set your daily calorie target:",cur);
+  const floor=safeCalFloor();
+  const val=prompt("Set your daily calorie target (or leave blank to use the recommended value):",cur);
   if(val===null)return;
-  const n=parseInt(val,10);
-  if(!n||n<800||n>6000){showToast("Enter a value between 800 and 6000","err");return;}
+  // blank input => clear the custom override, go back to recommended
+  if(val.trim()===""){
+    CALTARGET=calcCalTarget();
+    renderFoodLog();
+    try{
+      await db.from("profiles").update({cal_target:null,cal_target_custom:false}).eq("id",U.id);
+      P.cal_target=null;P.cal_target_custom=false;
+    }catch(e){P.cal_target=null;P.cal_target_custom=false;}
+    showToast("Using your recommended target","ok");
+    return;
+  }
+  let n=parseInt(val,10);
+  if(!n||n>6000){showToast("Please enter a realistic number","err");return;}
+  // safety floor: never store a target below what is healthy for this person
+  if(n<floor){
+    n=floor;
+    showToast("For your safety, set to the lowest recommended amount","ok");
+  }
   CALTARGET=n;
   renderFoodLog();
   try{
-    await db.from("profiles").update({cal_target:n}).eq("id",U.id);
-    P.cal_target=n;
-  }catch(e){/* column may not exist yet; UI still updates */}
+    await db.from("profiles").update({cal_target:n,cal_target_custom:true}).eq("id",U.id);
+    P.cal_target=n;P.cal_target_custom=true;
+  }catch(e){P.cal_target=n;P.cal_target_custom=true;/* column may not exist yet; UI still updates */}
 }
 
 // ===== Water Tracker =====
@@ -2576,7 +2619,7 @@ async function buildInsights(){
   const mon=startOfWeekMonday(new Date());
   const days=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);days.push(dateKey(d));}
   const oldest=days[0],newest=days[6];
-  const calTarget=P.cal_target||calcCalTarget();
+  const calTarget=effectiveCalTarget();
   const waterGoalGlasses=Math.ceil((P.water_goal_ml||calcWaterGoal())/250);
   let foods=[],waters=[],habs=[],wks=[],weights=[];
   try{
@@ -3404,7 +3447,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.04.5";
+const APP_VERSION = "2026.06.04.6";
 
 async function checkForUpdate(){
   try{
