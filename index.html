@@ -23,8 +23,6 @@ html{scroll-behavior:smooth;background:var(--bg);}
 body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size:14px;line-height:1.5;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none;}
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--s5);}
 .hidden{display:none!important;}
-.reveal{opacity:0;transform:translateY(18px);transition:opacity .5s,transform .5s;}
-.reveal.visible{opacity:1;transform:translateY(0);}
 
 /* CANVAS */
 #bgc{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;}
@@ -520,8 +518,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .dc.ph2 .dn{color:rgba(255,179,71,0.8);font-size:12px;}
 .dc.ph3 .dn{color:rgba(255,79,79,0.8);font-size:12px;}
 /* REVEAL ANIMATIONS */
-.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease;}
-.reveal.visible{opacity:1;transform:translateY(0);}
 .reveal-left{opacity:0;transform:translateX(-16px);transition:opacity .4s ease,transform .4s ease;}
 .reveal-left.visible{opacity:1;transform:translateX(0);}
 /* CARD ENTRANCE */
@@ -643,6 +639,23 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .toast.ok{border-color:rgba(61,214,140,.4);color:var(--gr);}
 .toast.err{border-color:rgba(255,79,79,.4);color:var(--re);}
 
+/* ===== Celebration ===== */
+.celebrate-layer{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .3s;}
+.celebrate-layer.on{opacity:1;pointer-events:auto;}
+.celebrate-confetti{position:absolute;inset:0;overflow:hidden;}
+.confetti{position:absolute;top:-20px;border-radius:2px;opacity:0;animation-name:confettiFall;animation-timing-function:cubic-bezier(.3,.7,.4,1);animation-fill-mode:forwards;}
+@keyframes confettiFall{
+  0%{opacity:0;top:-20px;}
+  10%{opacity:1;}
+  100%{opacity:0;top:100%;transform:translateX(var(--drift)) rotate(540deg);}
+}
+.celebrate-card{position:relative;background:var(--s1);border:1px solid rgba(200,255,0,0.4);border-radius:var(--r);padding:24px 30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:celebratePop .5s cubic-bezier(.34,1.56,.64,1);max-width:80%;}
+@keyframes celebratePop{0%{transform:scale(.6);opacity:0;}60%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
+.celebrate-emoji{font-size:44px;line-height:1;margin-bottom:8px;animation:celebrateEmoji .6s ease;}
+@keyframes celebrateEmoji{0%{transform:scale(0) rotate(-30deg);}60%{transform:scale(1.3) rotate(10deg);}100%{transform:scale(1) rotate(0);}}
+.celebrate-title{font-family:Oswald,sans-serif;font-size:22px;font-weight:600;color:var(--acc);margin-bottom:4px;}
+.celebrate-msg{font-size:13px;color:var(--t2);line-height:1.4;}
+
 @media(max-width:580px){
   .stats-row{grid-template-columns:repeat(2,1fr);}
   .thero-grid{grid-template-columns:1fr 1fr;}
@@ -690,8 +703,19 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 @keyframes slideUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
 @keyframes slideLeft{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1);}
-.reveal.visible{opacity:1;transform:translateY(0);}
+/* Every page fades+lifts in on becoming active, so moving between tabs always feels alive (not dependent on scrolling) */
+.page.active{animation:pageIn .42s cubic-bezier(.22,1,.36,1);}
+@keyframes pageIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.reveal{opacity:0;transform:translateY(28px) scale(.985);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1);}
+.reveal.visible{opacity:1;transform:translateY(0) scale(1);}
+/* staggered cascade: each revealed sibling delays a touch more */
+.reveal.visible{transition-delay:var(--rd,0s);}
+/* tap/press micro-interaction on interactive cards */
+.card,.stile,.plan-item,.plan-cta,.histwk-sumitem{transition:transform .15s ease, box-shadow .15s ease;}
+.card:active,.plan-item:active,.plan-cta:active{transform:scale(.985);}
+@media(hover:hover){
+  .plan-item:hover,.plan-cta:hover{transform:translateY(-1px);}
+}
 .dc{opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .4s ease,border-color .2s,box-shadow .2s;}
 .dc.visible{opacity:1;transform:translateY(0);}
 .dc:nth-child(1){transition-delay:.04s;}
@@ -717,6 +741,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 <body>
 <canvas id="bgc"></canvas>
 <div id="toast" class="toast"></div>
+<div id="celebrate-layer" class="celebrate-layer"></div>
 
 <div id="plan-week-modal" class="plan-modal">
   <div class="plan-modal-inner">
@@ -2152,8 +2177,13 @@ function renderWater(){
 async function changeWater(d){
   const next=WATER_GLASSES+d;
   if(next<0)return;
+  const wasUnder=(WATER_GLASSES*GLASS_ML)<WATER_GOAL_ML;
   WATER_GLASSES=next;
   renderWater();
+  // celebrate the moment they cross their water goal
+  if(d>0&&wasUnder&&(WATER_GLASSES*GLASS_ML)>=WATER_GOAL_ML){
+    celebrate("Hydration Goal Hit!","You reached your water target for today. Your body thanks you.","water_goal");
+  }
   try{
     await db.from("water_logs").upsert(
       {user_id:U.id,log_date:todayKey(),glasses:WATER_GLASSES},
@@ -2773,6 +2803,7 @@ async function markPlanSessionDone(){
     });
     if(error)throw error;
     showToast("Session logged! It counts toward your goal.","ok");
+    celebrate("Session Complete!","You showed up and put in the work. That is how progress is built.","plan_done");
     await renderPlanCard();
     await loadWkHistory();
   }catch(e){showToast("Could not log session. Try again.","err");}
@@ -3214,7 +3245,10 @@ function showPage(name){
   if(name==="progress")loadProgress();
   if(name==="admin")loadAdmin();
   if(name==="profile")renderProfPage();
-  window.scrollTo(0,0);observeReveal();
+  window.scrollTo(0,0);
+  // replay the staggered reveal cascade; second pass catches async-injected cards
+  setTimeout(()=>rearmReveals(pg),60);
+  setTimeout(()=>observeReveal(),450);
 }
 
 const PHASE_COLORS=["var(--acc)","var(--pu)","var(--am)","var(--re)"];
@@ -3253,11 +3287,35 @@ function jumpDay(i){
   setTimeout(()=>{const el=document.getElementById("dc"+i);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
 }
 
+let _revealObs=null;
 function observeReveal(){
-  document.querySelectorAll(".reveal:not(.visible)").forEach(el=>{
-    const obs=new IntersectionObserver(ent=>{ent.forEach(en=>{if(en.isIntersecting){en.target.classList.add("visible");obs.unobserve(en.target);}});},{threshold:0.07});
-    obs.observe(el);
+  if(!_revealObs){
+    _revealObs=new IntersectionObserver(ent=>{
+      ent.forEach(en=>{
+        if(en.isIntersecting){en.target.classList.add("visible");_revealObs.unobserve(en.target);}
+      });
+    },{threshold:0.06,rootMargin:"0px 0px -5% 0px"});
+  }
+  document.querySelectorAll(".reveal:not(.visible)").forEach(el=>_revealObs.observe(el));
+}
+
+// Re-arm reveals within a container (used when a tab becomes visible) so the
+// cascade animation replays as the user moves through the app, not just once.
+function rearmReveals(container){
+  if(!container)return;
+  const els=[...container.querySelectorAll(".reveal")];
+  els.forEach((el,i)=>{
+    if(_revealObs)_revealObs.unobserve(el);
+    el.classList.remove("visible");
+    el.style.setProperty("--rd",(Math.min(i,8)*0.06)+"s"); // staggered cascade
   });
+  // next frame, observe again so they animate in
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>observeReveal());});
+  // safety: never leave content stuck invisible if observer misses it
+  setTimeout(()=>{container.querySelectorAll(".reveal:not(.visible)").forEach(el=>{
+    const r=el.getBoundingClientRect();
+    if(r.top<window.innerHeight+100)el.classList.add("visible");
+  });},1300);
 }
 
 let tT=null;
@@ -3265,6 +3323,51 @@ function showToast(msg,type=""){
   const el=document.getElementById("toast");
   el.textContent=msg;el.className="toast"+(type?" "+type:"");el.classList.add("show");
   if(tT)clearTimeout(tT);tT=setTimeout(()=>el.classList.remove("show"),3000);
+}
+
+// ===== Celebration moments =====
+// Fires a confetti burst + message for a real achievement. Guards so the same
+// celebration only fires once per day (stored in localStorage by a key).
+function celebrationSeen(key){
+  try{
+    const k="ritual_celebrate_"+key+"_"+todayKey();
+    if(localStorage.getItem(k))return true;
+    localStorage.setItem(k,"1");
+    return false;
+  }catch(e){return false;} // if storage blocked, allow it (better to celebrate than error)
+}
+
+function celebrate(title,msg,key){
+  // once-per-day guard per achievement type
+  if(key&&celebrationSeen(key))return;
+  const layer=document.getElementById("celebrate-layer");
+  if(!layer)return;
+  // build confetti pieces
+  const colors=["#c8ff00","#3dd68c","#60a5fa","#f59e0b","#ffffff"];
+  let pieces="";
+  const N=36;
+  for(let i=0;i<N;i++){
+    const left=Math.random()*100;
+    const delay=(Math.random()*0.25).toFixed(2);
+    const dur=(1.6+Math.random()*1.1).toFixed(2);
+    const col=colors[i%colors.length];
+    const size=(6+Math.random()*6).toFixed(0);
+    const rot=(Math.random()*360).toFixed(0);
+    const drift=(Math.random()*60-30).toFixed(0);
+    pieces+=`<span class="confetti" style="left:${left}%;width:${size}px;height:${size}px;background:${col};animation-delay:${delay}s;animation-duration:${dur}s;--drift:${drift}px;transform:rotate(${rot}deg);"></span>`;
+  }
+  layer.innerHTML=`
+    <div class="celebrate-confetti">${pieces}</div>
+    <div class="celebrate-card">
+      <div class="celebrate-emoji">🎉</div>
+      <div class="celebrate-title">${title}</div>
+      <div class="celebrate-msg">${msg}</div>
+    </div>`;
+  layer.classList.add("on");
+  // auto-dismiss
+  setTimeout(()=>{layer.classList.remove("on");setTimeout(()=>{layer.innerHTML="";},400);},2600);
+  // allow tap to dismiss early
+  layer.onclick=()=>{layer.classList.remove("on");setTimeout(()=>{layer.innerHTML="";},400);};
 }
 
 function drawBG(){
@@ -3301,7 +3404,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.04.3";
+const APP_VERSION = "2026.06.04.5";
 
 async function checkForUpdate(){
   try{
