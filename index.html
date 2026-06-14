@@ -1090,7 +1090,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <div class="card reveal">
       <div class="card-lbl">AI Diet Plan</div>
       <div class="plan-box" id="dietplan">Generating your personalized plan...</div>
-      <button class="btn-gen" onclick="genDiet()">🔄 Regenerate Plan</button>
+      <button class="btn-gen" onclick="genDiet(true)">🔄 Regenerate Plan</button>
     </div>
     <div class="card reveal">
       <div class="card-lbl">Daily Meal Structure</div>
@@ -2286,23 +2286,44 @@ async function loadDietPlan(){
   genDiet();
 }
 
-async function genDiet(){
+async function genDiet(force){
   const el=document.getElementById("dietplan");
+  // Caching: if a saved plan exists and we are not forcing a regenerate, show it.
+  if(!force){
+    try{
+      const{data}=await db.from("plans").select("content,created_at").eq("user_id",U.id).eq("plan_type","diet").order("created_at",{ascending:false}).limit(1);
+      if(data&&data.length&&data[0].content){el.textContent=data[0].content;return;}
+    }catch(e){}
+  }
   el.textContent="Generating your personalized plan...";
-  const goal=(P.goal||"lose_fat").replace("_"," ");
-  const bmi=(P.bmi||25).toFixed(1);
-  const prompt="You are a professional nutritionist. Create a concise personalized daily diet plan for:\nGoal: "+goal+"\nBMI: "+bmi+"\nAge: "+(P.age||25)+"\nGender: "+(P.gender||"male")+"\nActivity: "+(P.activity_level||"sedentary")+"\nLocation: Karachi, Pakistan (they order from FoodPanda)\nAvailable: Pakistani cuisine, BBQ places, United King salads\n\nGive a practical daily meal plan under 300 words. Be specific about quantities.";
+  const profile={
+    goal:(P.goal||"lose_fat").replace("_"," "),
+    bmi:(P.bmi||25).toFixed(1),
+    age:P.age||25,
+    gender:P.gender||"male",
+    activity:P.activity_level||"sedentary",
+    target:effectiveCalTarget(),   // already-safe target
+    floor:safeCalFloor()           // never go below this
+  };
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
+    const res=await fetch("/api/diet",{
       method:"POST",
-      headers:{"Content-Type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:prompt}]})
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({profile})
     });
+    if(!res.ok){
+      el.textContent="The plan service is unavailable right now. Your meal structure below still gives you a solid daily framework.";
+      return;
+    }
     const d=await res.json();
-    const txt=d.content?.[0]?.text||"Could not generate plan. Try again.";
+    const txt=d.text;
+    if(!txt){
+      el.textContent="The plan service is unavailable right now. Your meal structure below still gives you a solid daily framework.";
+      return;
+    }
     el.textContent=txt;
-    await db.from("plans").insert({user_id:U.id,plan_type:"diet",content:txt});
-  }catch(e){el.textContent="Could not generate plan. Check your connection.";}
+    try{await db.from("plans").insert({user_id:U.id,plan_type:"diet",content:txt});}catch(e){}
+  }catch(e){el.textContent="Could not reach the plan service. Please check your connection and try again.";}
 }
 
 function renderHabs(){
@@ -2762,7 +2783,7 @@ function renderInsightChart(weights,dailyCal,calTarget,days){
 
 // ===== Workout Logging =====
 const EXERCISE_DB=["Bench Press","Squat","Deadlift","Overhead Press","Barbell Row","Pull Up","Push Up","Lat Pulldown","Bicep Curl","Tricep Extension","Leg Press","Lunges","Leg Curl","Leg Extension","Shoulder Press","Lateral Raise","Chest Fly","Cable Row","Plank","Crunches","Running","Cycling","Treadmill","Jump Rope","Burpees","Mountain Climbers","Yoga","Stretching","Swimming","Walking"];
-let WK_MODE="quick", WK_EXERCISES=[];
+let WK_MODE="quick", WK_EXERCISES=[], _wkLogging=false;
 
 function wkSetMode(m){
   WK_MODE=m;
@@ -2950,6 +2971,7 @@ async function logQuickWorkout(){
   const name=document.getElementById("wk-q-name").value.trim();
   const dur=parseInt(document.getElementById("wk-q-dur").value,10)||null;
   if(!name){showToast("Enter a workout name","err");return;}
+  if(_wkLogging)return; _wkLogging=true;
   try{
     const{error}=await db.from("workout_logs").insert({
       user_id:U.id,log_date:todayKey(),name,duration_min:dur,exercises:null
@@ -2960,12 +2982,14 @@ async function logQuickWorkout(){
     await loadWkHistory();
     showToast("Workout logged!","ok");
   }catch(e){showToast("Could not save: "+e.message,"err");}
+  finally{setTimeout(()=>{_wkLogging=false;},600);}
 }
 
 async function logDetailWorkout(){
   const name=document.getElementById("wk-d-name").value.trim();
   if(!name){showToast("Enter a workout name","err");return;}
   if(WK_EXERCISES.length===0){showToast("Add at least one exercise","err");return;}
+  if(_wkLogging)return; _wkLogging=true;
   // total duration = sum of any per-exercise durations
   let totalDur=WK_EXERCISES.reduce((s,e)=>s+(parseInt(e.duration,10)||0),0)||null;
   try{
@@ -2979,6 +3003,7 @@ async function logDetailWorkout(){
     await loadWkHistory();
     showToast("Workout saved!","ok");
   }catch(e){showToast("Could not save: "+e.message,"err");}
+  finally{setTimeout(()=>{_wkLogging=false;},600);}
 }
 
 async function loadWkHistory(){
@@ -3447,7 +3472,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.04.6";
+const APP_VERSION = "2026.06.04.9";
 
 async function checkForUpdate(){
   try{
