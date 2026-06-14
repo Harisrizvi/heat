@@ -70,6 +70,24 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .water-btn{flex:1;background:var(--s3);color:var(--t1);border:1px solid var(--s4);border-radius:var(--rs);padding:10px;font-size:14px;font-weight:600;cursor:pointer;}
 .water-btn-add{background:var(--acc);color:var(--bg);border-color:var(--acc);}
 .water-each{font-size:11px;color:var(--t3);white-space:nowrap;}
+.fast-idle{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.fast-pick-lbl{font-size:12px;color:var(--t2);font-weight:600;align-self:flex-start;}
+.fast-presets{display:flex;gap:8px;flex-wrap:wrap;width:100%;}
+.fast-preset{flex:1;min-width:56px;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:10px 6px;font-weight:700;font-size:13px;cursor:pointer;}
+.fast-preset.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
+.fast-desc{font-size:12px;color:var(--t3);text-align:center;line-height:1.4;min-height:34px;}
+.fast-btn{width:100%;border:none;border-radius:var(--rs);padding:13px;font-weight:700;font-size:14px;cursor:pointer;}
+.fast-btn:active{transform:scale(.99);}
+.fast-start{background:var(--acc);color:var(--bg);}
+.fast-stop{background:var(--s3);color:var(--t1);border:1px solid var(--s4);}
+.fast-note{font-size:10px;color:var(--t3);line-height:1.4;text-align:center;}
+.fast-active{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.fast-ring-wrap{position:relative;width:160px;height:160px;}
+.fast-ring{width:100%;height:100%;}
+.fast-ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.fast-elapsed{font-family:Oswald,sans-serif;font-size:28px;font-weight:600;color:var(--t1);}
+.fast-sub{font-size:12px;color:var(--t3);margin-top:2px;}
+.fast-info{font-size:13px;color:var(--t2);text-align:center;}
 .standing{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
 .standing-hd{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;}
 .standing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -1097,6 +1115,10 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         <button class="water-btn water-btn-add" onclick="changeWater(1)">+ Glass</button>
         <span class="water-each">1 glass ≈ 250 ml</span>
       </div>
+    </div>
+    <div class="card reveal" id="fasting-card">
+      <div class="card-lbl">Fasting</div>
+      <div id="fasting-body"></div>
     </div>
     <div class="card reveal">
       <div class="card-lbl">AI Diet Plan</div>
@@ -2319,6 +2341,100 @@ function renderWater(){
   document.getElementById("water-glasses").innerHTML=html;
 }
 
+// ===== Fasting Timer =====
+// Well-known intermittent fasting protocols (fasting hours : eating hours).
+const FAST_PRESETS=[
+  {id:"16_8",name:"16:8",fast:16,desc:"16h fast, 8h eating window. The most popular and beginner-friendly."},
+  {id:"18_6",name:"18:6",fast:18,desc:"18h fast, 6h eating window. A step up from 16:8."},
+  {id:"20_4",name:"20:4",fast:20,desc:"20h fast, 4h window (Warrior Diet). For experienced fasters."},
+  {id:"omad",name:"OMAD",fast:23,desc:"One Meal A Day, about a 1h eating window. Advanced."},
+  {id:"14_10",name:"14:10",fast:14,desc:"14h fast, 10h window. Gentle, good for starting out."}
+];
+let FAST_STATE=null;   // {presetId, startTs} when active
+let FAST_TICK=null;
+
+function fastKey(){return "ritual_fast_"+(U?U.id:"x");}
+function loadFastState(){
+  try{const raw=localStorage.getItem(fastKey());FAST_STATE=raw?JSON.parse(raw):null;}catch(e){FAST_STATE=null;}
+}
+function saveFastState(){
+  try{if(FAST_STATE)localStorage.setItem(fastKey(),JSON.stringify(FAST_STATE));else localStorage.removeItem(fastKey());}catch(e){}
+}
+let FAST_SELECTED="16_8";
+function renderFasting(){
+  const el=document.getElementById("fasting-body");
+  if(!el)return;
+  if(FAST_STATE){
+    const preset=FAST_PRESETS.find(p=>p.id===FAST_STATE.presetId)||FAST_PRESETS[0];
+    const goalMs=preset.fast*3600*1000;
+    const elapsed=Date.now()-FAST_STATE.startTs;
+    const frac=Math.max(0,Math.min(1,elapsed/goalMs));
+    const reached=elapsed>=goalMs;
+    const remaining=Math.max(0,goalMs-elapsed);
+    const fmt=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
+    const R=52,C=2*Math.PI*R;
+    el.innerHTML=`
+      <div class="fast-active">
+        <div class="fast-ring-wrap">
+          <svg viewBox="0 0 120 120" class="fast-ring">
+            <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--s3)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="${R}" fill="none" stroke="${reached?'var(--gr)':'var(--acc)'}" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
+          </svg>
+          <div class="fast-ring-txt">
+            <div class="fast-elapsed">${fmt(elapsed)}</div>
+            <div class="fast-sub">${reached?"Goal reached":fmt(remaining)+" left"}</div>
+          </div>
+        </div>
+        <div class="fast-info">${preset.name} fast · goal ${preset.fast}h${reached?" · you can eat now":""}</div>
+        <button class="fast-btn fast-stop" onclick="stopFast()">End Fast</button>
+      </div>`;
+  }else{
+    el.innerHTML=`
+      <div class="fast-idle">
+        <div class="fast-pick-lbl">Choose a fasting protocol</div>
+        <div class="fast-presets">${FAST_PRESETS.map(p=>`<button class="fast-preset${p.id===FAST_SELECTED?' on':''}" onclick="selectFast('${p.id}')">${p.name}</button>`).join("")}</div>
+        <div class="fast-desc">${(FAST_PRESETS.find(p=>p.id===FAST_SELECTED)||FAST_PRESETS[0]).desc}</div>
+        <button class="fast-btn fast-start" onclick="startFast()">Start Fast</button>
+        <div class="fast-note">Intermittent fasting is not suitable for everyone. If you are pregnant, diabetic, underweight, have a history of disordered eating, or take medication, consult a professional first.</div>
+      </div>`;
+  }
+}
+function selectFast(id){FAST_SELECTED=id;renderFasting();}
+function startFast(){
+  FAST_STATE={presetId:FAST_SELECTED,startTs:Date.now()};
+  saveFastState();
+  renderFasting();
+  startFastTick();
+}
+function stopFast(){
+  // celebrate if they reached the goal
+  if(FAST_STATE){
+    const preset=FAST_PRESETS.find(p=>p.id===FAST_STATE.presetId)||FAST_PRESETS[0];
+    const elapsed=Date.now()-FAST_STATE.startTs;
+    if(elapsed>=preset.fast*3600*1000){
+      celebrate("Fast Complete!","You completed your "+preset.name+" fast. Break it gently with something light.","fast_done");
+    }
+  }
+  FAST_STATE=null;saveFastState();
+  if(FAST_TICK){clearInterval(FAST_TICK);FAST_TICK=null;}
+  renderFasting();
+}
+function startFastTick(){
+  if(FAST_TICK)clearInterval(FAST_TICK);
+  if(!FAST_STATE)return;
+  FAST_TICK=setInterval(()=>{
+    if(!FAST_STATE){clearInterval(FAST_TICK);FAST_TICK=null;return;}
+    renderFasting();
+  },1000);
+}
+function initFasting(){
+  loadFastState();
+  renderFasting();
+  if(FAST_STATE)startFastTick();
+}
+
+
 async function changeWater(d){
   const next=WATER_GLASSES+d;
   if(next<0)return;
@@ -2371,6 +2487,7 @@ function renderDiet(){
   document.getElementById("dbmdesc").textContent=fullDesc;
   loadCalTracker();
   loadWaterTracker();
+  initFasting();
   loadDietPlan();
   const meals=[
     {t:"Morning",n:"Breakfast",d:"2 boiled eggs + 1 roti + chai without sugar."},
@@ -3584,7 +3701,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.3";
+const APP_VERSION = "2026.06.05.4";
 
 async function checkForUpdate(){
   try{
