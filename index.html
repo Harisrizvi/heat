@@ -2027,21 +2027,64 @@ async function toggleDay(i){
 // ===== Food / Calorie Tracker =====
 // Common foods incl. Pakistani dishes. cal = per typical serving.
 const FOOD_DB=[
-  {n:"Roti / Chapati",c:120,p:3,cb:22,f:3},{n:"Naan",c:260,p:8,cb:48,f:5},{n:"Paratha (plain)",c:280,p:5,cb:36,f:13},
-  {n:"Chicken Biryani (1 plate)",c:600,p:25,cb:75,f:22},{n:"Beef Biryani (1 plate)",c:680,p:28,cb:78,f:28},
-  {n:"Chicken Karahi (1 serving)",c:450,p:35,cb:8,f:30},{n:"Daal (1 bowl)",c:200,p:12,cb:30,f:4},
-  {n:"Seekh Kebab (1 pc)",c:130,p:9,cb:2,f:9},{n:"Chicken Tikka (1 pc)",c:200,p:26,cb:2,f:10},
-  {n:"Chicken Boti (1 serving)",c:300,p:35,cb:3,f:16},{n:"Nihari (1 bowl)",c:550,p:30,cb:18,f:38},
-  {n:"Haleem (1 bowl)",c:380,p:22,cb:35,f:16},{n:"Chicken Pulao (1 plate)",c:520,p:24,cb:68,f:16},
-  {n:"Samosa (1 pc)",c:150,p:3,cb:17,f:8},{n:"Pakora (4 pc)",c:220,p:5,cb:22,f:13},{n:"Aloo Gosht (1 bowl)",c:400,p:24,cb:18,f:26},
-  {n:"Boiled Egg",c:78,p:6,cb:1,f:5},{n:"Fried Egg",c:90,p:6,cb:1,f:7},{n:"Omelette (2 egg)",c:220,p:14,cb:2,f:17},
-  {n:"Chai with sugar",c:120,p:3,cb:18,f:4},{n:"Chai without sugar",c:40,p:2,cb:3,f:2},{n:"Lassi (1 glass)",c:260,p:9,cb:34,f:10},
-  {n:"Banana",c:105,p:1,cb:27,f:0},{n:"Apple",c:95,p:0,cb:25,f:0},{n:"Orange",c:62,p:1,cb:15,f:0},{n:"Dates (3 pc)",c:60,p:0,cb:16,f:0},
-  {n:"Almonds (10)",c:70,p:3,cb:2,f:6},{n:"Yogurt (1 cup)",c:150,p:8,cb:11,f:8},{n:"Milk (1 glass)",c:150,p:8,cb:12,f:8},
-  {n:"White Rice (1 cup)",c:200,p:4,cb:45,f:0},{n:"Chicken Breast (100g)",c:165,p:31,cb:0,f:4},
-  {n:"BBQ Salad (United King)",c:350,p:30,cb:15,f:18},{n:"Fruit Chaat (1 bowl)",c:180,p:2,cb:44,f:1},
-  {n:"Chapli Kebab (1 pc)",c:280,p:16,cb:6,f:21},{n:"Qeema (1 serving)",c:350,p:26,cb:6,f:25},
-  {n:"Channa Chaat (1 bowl)",c:250,p:11,cb:38,f:6},{n:"Halwa Puri (1 plate)",c:700,p:12,cb:90,f:32}
+  // Breads
+  {n:"Roti / Chapati",c:120,p:3,cb:22,f:3,alt:"phulka tandoori"},{n:"Naan",c:260,p:8,cb:48,f:5},
+  {n:"Roghni Naan",c:320,p:8,cb:50,f:9},{n:"Paratha (plain)",c:280,p:5,cb:36,f:13},
+  {n:"Aloo Paratha",c:330,p:7,cb:42,f:15},{n:"Lachha Paratha",c:300,p:6,cb:38,f:14},
+  {n:"Sheermal",c:340,p:7,cb:55,f:10},{n:"Taftan",c:300,p:8,cb:52,f:7},{n:"Puri (1 pc)",c:100,p:2,cb:12,f:5},
+  // Rice
+  {n:"Chicken Biryani (1 plate)",c:600,p:25,cb:75,f:22,alt:"biriyani biryani"},{n:"Beef Biryani (1 plate)",c:680,p:28,cb:78,f:28},
+  {n:"Mutton Biryani (1 plate)",c:700,p:30,cb:76,f:32},{n:"Vegetable Biryani (1 plate)",c:480,p:10,cb:80,f:14},
+  {n:"Chicken Pulao (1 plate)",c:520,p:24,cb:68,f:16,alt:"pilau pulav"},{n:"Mutton Pulao (1 plate)",c:600,p:26,cb:68,f:24},
+  {n:"White Rice (1 cup)",c:200,p:4,cb:45,f:0,alt:"boiled rice chawal"},{n:"Fried Rice (1 plate)",c:380,p:10,cb:60,f:11},
+  {n:"Kabuli Pulao (1 plate)",c:620,p:22,cb:80,f:24},
+  // Curries / salan
+  {n:"Chicken Karahi (1 serving)",c:450,p:35,cb:8,f:30,alt:"kadai"},{n:"Mutton Karahi (1 serving)",c:550,p:34,cb:8,f:40},
+  {n:"Chicken Qorma (1 bowl)",c:420,p:28,cb:12,f:28,alt:"korma"},{n:"Daal (1 bowl)",c:200,p:12,cb:30,f:4,alt:"lentils dal masoor moong"},
+  {n:"Daal Makhani (1 bowl)",c:330,p:13,cb:32,f:16},{n:"Nihari (1 bowl)",c:550,p:30,cb:18,f:38},
+  {n:"Haleem (1 bowl)",c:380,p:22,cb:35,f:16,alt:"daleem"},{n:"Aloo Gosht (1 bowl)",c:400,p:24,cb:18,f:26,alt:"potato meat"},
+  {n:"Bhindi (1 bowl)",c:180,p:4,cb:14,f:12,alt:"okra"},{n:"Aloo Palak (1 bowl)",c:220,p:6,cb:20,f:13,alt:"spinach"},
+  {n:"Chana Daal (1 bowl)",c:240,p:13,cb:34,f:6},{n:"Qeema (1 serving)",c:350,p:26,cb:6,f:25,alt:"keema mince"},
+  {n:"Palak Paneer (1 bowl)",c:300,p:14,cb:12,f:22},{n:"Chicken Handi (1 serving)",c:430,p:32,cb:10,f:28},
+  {n:"Fish Curry (1 serving)",c:300,p:28,cb:8,f:17,alt:"machli"},{n:"Egg Curry (1 serving)",c:280,p:16,cb:8,f:20,alt:"anda"},
+  // BBQ
+  {n:"Seekh Kebab (1 pc)",c:130,p:9,cb:2,f:9,alt:"kabab"},{n:"Chicken Tikka (1 pc)",c:200,p:26,cb:2,f:10},
+  {n:"Chicken Boti (1 serving)",c:300,p:35,cb:3,f:16},{n:"Chapli Kebab (1 pc)",c:280,p:16,cb:6,f:21},
+  {n:"Malai Boti (1 serving)",c:320,p:33,cb:4,f:19},{n:"Beef Kebab (1 pc)",c:160,p:11,cb:2,f:12},
+  {n:"Reshmi Kebab (1 pc)",c:150,p:12,cb:2,f:10},{n:"Fish Tikka (1 pc)",c:180,p:24,cb:2,f:8},
+  // Street food
+  {n:"Samosa (1 pc)",c:150,p:3,cb:17,f:8,alt:"samosay"},{n:"Pakora (4 pc)",c:220,p:5,cb:22,f:13,alt:"pakoray bhajia"},
+  {n:"Spring Roll (1 pc)",c:120,p:4,cb:13,f:6},{n:"Dahi Bhalla (1 bowl)",c:250,p:7,cb:35,f:9},
+  {n:"Gol Gappay (6 pc)",c:180,p:4,cb:34,f:4,alt:"pani puri golgappa"},{n:"Channa Chaat (1 bowl)",c:250,p:11,cb:38,f:6,alt:"chana chaat"},
+  {n:"Fruit Chaat (1 bowl)",c:180,p:2,cb:44,f:1},{n:"Bun Kebab (1 pc)",c:350,p:14,cb:38,f:16},
+  {n:"Anda Shami Burger",c:400,p:16,cb:40,f:20},{n:"Shawarma (1 roll)",c:480,p:26,cb:45,f:22,alt:"shwarma"},
+  {n:"Fries (1 serving)",c:320,p:4,cb:42,f:16,alt:"chips french fries"},
+  // Breakfast
+  {n:"Boiled Egg",c:78,p:6,cb:1,f:5,alt:"anda"},{n:"Fried Egg",c:90,p:6,cb:1,f:7},{n:"Omelette (2 egg)",c:220,p:14,cb:2,f:17},
+  {n:"Halwa Puri (1 plate)",c:700,p:12,cb:90,f:32},{n:"Channay (1 bowl)",c:260,p:12,cb:40,f:6,alt:"chickpeas chole"},
+  {n:"Aloo Bhujia (1 serving)",c:200,p:4,cb:24,f:10},{n:"Paratha with Egg",c:370,p:11,cb:37,f:20},
+  {n:"Cornflakes with Milk",c:230,p:8,cb:40,f:5},{n:"Oats (1 bowl)",c:150,p:5,cb:27,f:3,alt:"oatmeal daliya"},
+  // Drinks
+  {n:"Chai with sugar",c:120,p:3,cb:18,f:4,alt:"tea doodh patti"},{n:"Chai without sugar",c:40,p:2,cb:3,f:2},
+  {n:"Green Tea",c:2,p:0,cb:0,f:0,alt:"qehwa kahwa"},{n:"Lassi (1 glass)",c:260,p:9,cb:34,f:10},
+  {n:"Sweet Lassi",c:320,p:9,cb:50,f:10},{n:"Milk (1 glass)",c:150,p:8,cb:12,f:8,alt:"doodh"},
+  {n:"Rooh Afza (1 glass)",c:180,p:0,cb:45,f:0},{n:"Soft Drink (can)",c:140,p:0,cb:39,f:0,alt:"coke pepsi cola"},
+  {n:"Fresh Lime (1 glass)",c:90,p:0,cb:23,f:0,alt:"nimbu pani"},{n:"Sugarcane Juice (1 glass)",c:180,p:0,cb:45,f:0,alt:"ganne ka ras"},
+  {n:"Black Coffee",c:5,p:0,cb:1,f:0},{n:"Coffee with Milk & Sugar",c:120,p:4,cb:18,f:4},
+  // Fruits
+  {n:"Banana",c:105,p:1,cb:27,f:0,alt:"kela"},{n:"Apple",c:95,p:0,cb:25,f:0,alt:"saib"},{n:"Orange",c:62,p:1,cb:15,f:0,alt:"malta"},
+  {n:"Mango (1)",c:200,p:3,cb:50,f:1,alt:"aam"},{n:"Dates (3 pc)",c:60,p:0,cb:16,f:0,alt:"khajoor"},
+  {n:"Watermelon (1 cup)",c:46,p:1,cb:12,f:0,alt:"tarbooz"},{n:"Grapes (1 cup)",c:62,p:1,cb:16,f:0,alt:"angoor"},
+  {n:"Guava",c:68,p:3,cb:14,f:1,alt:"amrood"},
+  // Protein / staples
+  {n:"Chicken Breast (100g)",c:165,p:31,cb:0,f:4},{n:"Beef (100g cooked)",c:250,p:26,cb:0,f:15},
+  {n:"Mutton (100g cooked)",c:290,p:25,cb:0,f:21},{n:"Fish (100g)",c:180,p:25,cb:0,f:8,alt:"machli"},
+  {n:"Yogurt (1 cup)",c:150,p:8,cb:11,f:8,alt:"dahi"},{n:"Paneer (100g)",c:265,p:18,cb:4,f:20},
+  {n:"Almonds (10)",c:70,p:3,cb:2,f:6,alt:"badam"},{n:"Walnuts (5 halves)",c:65,p:2,cb:1,f:7,alt:"akhrot"},
+  {n:"Peanuts (handful)",c:170,p:7,cb:5,f:14,alt:"moongphali"},
+  // Salads / sides
+  {n:"BBQ Salad (United King)",c:350,p:30,cb:15,f:18},{n:"Garden Salad",c:60,p:2,cb:10,f:1},
+  {n:"Raita (1 bowl)",c:90,p:4,cb:8,f:5},{n:"Kachumber Salad",c:50,p:1,cb:9,f:1}
 ];
 let FOODLOG=[],CALTARGET=2000,foodPicked=null;
 
@@ -2151,9 +2194,18 @@ function onFoodSearch(){
   const box=document.getElementById("food-suggest");
   foodPicked=null;
   if(q.length<1){box.classList.remove("on");box.innerHTML="";return;}
-  const matches=FOOD_DB.filter(f=>f.n.toLowerCase().includes(q)).slice(0,6);
-  if(matches.length===0){box.classList.remove("on");box.innerHTML="";return;}
-  box.innerHTML=matches.map((f,i)=>`<div class="food-suggest-item" onclick="pickFoodIdx(${FOOD_DB.indexOf(f)})"><span>${escapeHtml(f.n)}</span><span class="fs-cal">${f.c} cal</span></div>`).join("");
+  // match on the name OR any alternate spelling/keyword; prefer name-starts-with
+  const scored=FOOD_DB.map(f=>{
+    const name=f.n.toLowerCase();
+    const alt=(f.alt||"").toLowerCase();
+    let score=-1;
+    if(name.startsWith(q))score=0;
+    else if(name.includes(q))score=1;
+    else if(alt.includes(q))score=2;
+    return {f,score};
+  }).filter(x=>x.score>=0).sort((a,b)=>a.score-b.score).slice(0,8);
+  if(scored.length===0){box.classList.remove("on");box.innerHTML="";return;}
+  box.innerHTML=scored.map(x=>`<div class="food-suggest-item" onclick="pickFoodIdx(${FOOD_DB.indexOf(x.f)})"><span>${escapeHtml(x.f.n)}</span><span class="fs-cal">${x.f.c} cal</span></div>`).join("");
   box.classList.add("on");
 }
 
@@ -3532,7 +3584,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.2";
+const APP_VERSION = "2026.06.05.3";
 
 async function checkForUpdate(){
   try{
