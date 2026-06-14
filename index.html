@@ -80,6 +80,8 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .wt-stat-val{font-family:Oswald,sans-serif;font-size:19px;font-weight:700;color:var(--t1);}
 .wt-stat-val.down{color:var(--acc);}
 .wt-stat-val.up{color:var(--am);}
+.wt-stat-val.good{color:var(--acc);}
+.wt-stat-val.caution{color:var(--am);}
 .wt-chartwrap{background:var(--s2);border-radius:var(--rs);padding:12px;margin-bottom:12px;height:160px;}
 .wt-chartwrap svg{width:100%;height:100%;overflow:visible;display:block;}
 .wt-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--t3);text-align:center;}
@@ -2521,8 +2523,18 @@ function renderWeightStats(){
   const start=Number(WEIGHTS[0].weight_kg);
   const current=Number(WEIGHTS[WEIGHTS.length-1].weight_kg);
   const change=+(current-start).toFixed(1);
-  const cls=change<0?"down":(change>0?"up":"");
   const sign=change>0?"+":"";
+  // Color by progress toward the user's goal, not just direction.
+  // Fat loss: losing is good. Muscle/gain: gaining is good. Else: neutral.
+  const goal=((P&&P.plan_goal||"")+" "+(P&&P.goal||"")).toLowerCase();
+  const wantsLoss=goal.includes("fatloss")||goal.includes("lose");
+  const wantsGain=goal.includes("muscle")||goal.includes("gain");
+  let cls="";
+  if(change!==0){
+    if(wantsLoss)cls=change<0?"good":"caution";
+    else if(wantsGain)cls=change>0?"good":"caution";
+    else cls=""; // maintain/no goal: neutral
+  }
   el.innerHTML=`<div class="wt-stat"><div class="wt-stat-lbl">Start</div><div class="wt-stat-val">${start}</div></div>
     <div class="wt-stat"><div class="wt-stat-lbl">Current</div><div class="wt-stat-val">${current}</div></div>
     <div class="wt-stat"><div class="wt-stat-lbl">Change</div><div class="wt-stat-val ${cls}">${sign}${change} kg</div></div>`;
@@ -3472,7 +3484,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.04.9";
+const APP_VERSION = "2026.06.05.1";
 
 async function checkForUpdate(){
   try{
