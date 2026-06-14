@@ -52,6 +52,14 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .food-log-item .fl-cal{color:var(--t2);margin-left:auto;margin-right:10px;}
 .food-log-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
 .cal-arc-over{stroke:var(--re)!important;}
+.macro-row{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;}
+.macro-item{display:flex;flex-direction:column;gap:5px;}
+.macro-top{display:flex;justify-content:space-between;align-items:baseline;}
+.macro-lbl{font-size:12px;color:var(--t2);font-weight:600;}
+.macro-val{font-size:12px;color:var(--t3);}
+.macro-bar-track{height:6px;background:var(--s3);border-radius:6px;overflow:hidden;}
+.macro-bar-fill{height:100%;border-radius:6px;transition:width .5s cubic-bezier(.22,1,.36,1);}
+.macro-note{font-size:10px;color:var(--t3);line-height:1.4;margin-top:2px;}
 .water-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .water-amt{font-family:Oswald,sans-serif;font-size:28px;font-weight:700;color:var(--acc);line-height:1;}
 .water-unit{font-size:13px;color:var(--t3);font-family:Inter,sans-serif;font-weight:400;margin-left:4px;}
@@ -1074,6 +1082,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
           <button class="cal-addbtn" onclick="logFood()">Add</button>
         </div>
       </div>
+      <div id="macro-row" class="macro-row"></div>
       <div id="food-log" class="food-log"></div>
     </div>
     <div class="card reveal" id="water-card">
@@ -2018,21 +2027,21 @@ async function toggleDay(i){
 // ===== Food / Calorie Tracker =====
 // Common foods incl. Pakistani dishes. cal = per typical serving.
 const FOOD_DB=[
-  {n:"Roti / Chapati",c:120},{n:"Naan",c:260},{n:"Paratha (plain)",c:280},
-  {n:"Chicken Biryani (1 plate)",c:600},{n:"Beef Biryani (1 plate)",c:680},
-  {n:"Chicken Karahi (1 serving)",c:450},{n:"Daal (1 bowl)",c:200},
-  {n:"Seekh Kebab (1 pc)",c:130},{n:"Chicken Tikka (1 pc)",c:200},
-  {n:"Chicken Boti (1 serving)",c:300},{n:"Nihari (1 bowl)",c:550},
-  {n:"Haleem (1 bowl)",c:380},{n:"Chicken Pulao (1 plate)",c:520},
-  {n:"Samosa (1 pc)",c:150},{n:"Pakora (4 pc)",c:220},{n:"Aloo Gosht (1 bowl)",c:400},
-  {n:"Boiled Egg",c:78},{n:"Fried Egg",c:90},{n:"Omelette (2 egg)",c:220},
-  {n:"Chai with sugar",c:120},{n:"Chai without sugar",c:40},{n:"Lassi (1 glass)",c:260},
-  {n:"Banana",c:105},{n:"Apple",c:95},{n:"Orange",c:62},{n:"Dates (3 pc)",c:60},
-  {n:"Almonds (10)",c:70},{n:"Yogurt (1 cup)",c:150},{n:"Milk (1 glass)",c:150},
-  {n:"White Rice (1 cup)",c:200},{n:"Chicken Breast (100g)",c:165},
-  {n:"BBQ Salad (United King)",c:350},{n:"Fruit Chaat (1 bowl)",c:180},
-  {n:"Chapli Kebab (1 pc)",c:280},{n:"Qeema (1 serving)",c:350},
-  {n:"Channa Chaat (1 bowl)",c:250},{n:"Halwa Puri (1 plate)",c:700}
+  {n:"Roti / Chapati",c:120,p:3,cb:22,f:3},{n:"Naan",c:260,p:8,cb:48,f:5},{n:"Paratha (plain)",c:280,p:5,cb:36,f:13},
+  {n:"Chicken Biryani (1 plate)",c:600,p:25,cb:75,f:22},{n:"Beef Biryani (1 plate)",c:680,p:28,cb:78,f:28},
+  {n:"Chicken Karahi (1 serving)",c:450,p:35,cb:8,f:30},{n:"Daal (1 bowl)",c:200,p:12,cb:30,f:4},
+  {n:"Seekh Kebab (1 pc)",c:130,p:9,cb:2,f:9},{n:"Chicken Tikka (1 pc)",c:200,p:26,cb:2,f:10},
+  {n:"Chicken Boti (1 serving)",c:300,p:35,cb:3,f:16},{n:"Nihari (1 bowl)",c:550,p:30,cb:18,f:38},
+  {n:"Haleem (1 bowl)",c:380,p:22,cb:35,f:16},{n:"Chicken Pulao (1 plate)",c:520,p:24,cb:68,f:16},
+  {n:"Samosa (1 pc)",c:150,p:3,cb:17,f:8},{n:"Pakora (4 pc)",c:220,p:5,cb:22,f:13},{n:"Aloo Gosht (1 bowl)",c:400,p:24,cb:18,f:26},
+  {n:"Boiled Egg",c:78,p:6,cb:1,f:5},{n:"Fried Egg",c:90,p:6,cb:1,f:7},{n:"Omelette (2 egg)",c:220,p:14,cb:2,f:17},
+  {n:"Chai with sugar",c:120,p:3,cb:18,f:4},{n:"Chai without sugar",c:40,p:2,cb:3,f:2},{n:"Lassi (1 glass)",c:260,p:9,cb:34,f:10},
+  {n:"Banana",c:105,p:1,cb:27,f:0},{n:"Apple",c:95,p:0,cb:25,f:0},{n:"Orange",c:62,p:1,cb:15,f:0},{n:"Dates (3 pc)",c:60,p:0,cb:16,f:0},
+  {n:"Almonds (10)",c:70,p:3,cb:2,f:6},{n:"Yogurt (1 cup)",c:150,p:8,cb:11,f:8},{n:"Milk (1 glass)",c:150,p:8,cb:12,f:8},
+  {n:"White Rice (1 cup)",c:200,p:4,cb:45,f:0},{n:"Chicken Breast (100g)",c:165,p:31,cb:0,f:4},
+  {n:"BBQ Salad (United King)",c:350,p:30,cb:15,f:18},{n:"Fruit Chaat (1 bowl)",c:180,p:2,cb:44,f:1},
+  {n:"Chapli Kebab (1 pc)",c:280,p:16,cb:6,f:21},{n:"Qeema (1 serving)",c:350,p:26,cb:6,f:25},
+  {n:"Channa Chaat (1 bowl)",c:250,p:11,cb:38,f:6},{n:"Halwa Puri (1 plate)",c:700,p:12,cb:90,f:32}
 ];
 let FOODLOG=[],CALTARGET=2000,foodPicked=null;
 
@@ -2106,9 +2115,33 @@ function renderFoodLog(){
   const frac=Math.min(1,total/CALTARGET);
   arc.style.strokeDashoffset=326.7*(1-frac);
   arc.classList.toggle("cal-arc-over",total>CALTARGET);
+  // macro totals (only counts entries that have macro data)
+  renderMacros();
   const log=document.getElementById("food-log");
   if(FOODLOG.length===0){log.innerHTML=emptyState("No food logged yet today. Add your first meal above.",ICO_FORK);return;}
   log.innerHTML=FOODLOG.map(f=>`<div class="food-log-item"><span>${escapeHtml(f.name)}${f.qty&&f.qty!=1?' ×'+f.qty:''}</span><span class="fl-cal">${f.calories} cal</span><button class="food-log-del" onclick="delFood('${f.id}')">✕</button></div>`).join("");
+}
+
+// Daily macro targets (estimates) from the calorie target: protein ~30%, carbs ~40%, fat ~30%.
+// Protein/carbs = 4 kcal/g, fat = 9 kcal/g. Labeled as estimates.
+function macroTargets(){
+  const cal=CALTARGET||2000;
+  return {p:Math.round(cal*0.30/4),cb:Math.round(cal*0.40/4),f:Math.round(cal*0.30/9)};
+}
+function renderMacros(){
+  const el=document.getElementById("macro-row");
+  if(!el)return;
+  const sum=FOODLOG.reduce((a,f)=>{a.p+=Number(f.protein)||0;a.cb+=Number(f.carbs)||0;a.f+=Number(f.fat)||0;return a;},{p:0,cb:0,f:0});
+  const tg=macroTargets();
+  const bar=(val,target,color)=>{
+    const pct=target?Math.min(100,Math.round(val/target*100)):0;
+    return `<div class="macro-bar-track"><div class="macro-bar-fill" style="width:${pct}%;background:${color}"></div></div>`;
+  };
+  el.innerHTML=`
+    <div class="macro-item"><div class="macro-top"><span class="macro-lbl">Protein</span><span class="macro-val">${sum.p} / ${tg.p}g</span></div>${bar(sum.p,tg.p,"var(--acc)")}</div>
+    <div class="macro-item"><div class="macro-top"><span class="macro-lbl">Carbs</span><span class="macro-val">${sum.cb} / ${tg.cb}g</span></div>${bar(sum.cb,tg.cb,"#60a5fa")}</div>
+    <div class="macro-item"><div class="macro-top"><span class="macro-lbl">Fat</span><span class="macro-val">${sum.f} / ${tg.f}g</span></div>${bar(sum.f,tg.f,"#f59e0b")}</div>
+    <div class="macro-note">Macro targets are estimates (about 30% protein, 40% carbs, 30% fat of your calorie target).</div>`;
 }
 
 function escapeHtml(s){return(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -2120,15 +2153,18 @@ function onFoodSearch(){
   if(q.length<1){box.classList.remove("on");box.innerHTML="";return;}
   const matches=FOOD_DB.filter(f=>f.n.toLowerCase().includes(q)).slice(0,6);
   if(matches.length===0){box.classList.remove("on");box.innerHTML="";return;}
-  box.innerHTML=matches.map(f=>`<div class="food-suggest-item" onclick="pickFood('${escapeHtml(f.n).replace(/'/g,"\\'")}',${f.c})"><span>${escapeHtml(f.n)}</span><span class="fs-cal">${f.c} cal</span></div>`).join("");
+  box.innerHTML=matches.map((f,i)=>`<div class="food-suggest-item" onclick="pickFoodIdx(${FOOD_DB.indexOf(f)})"><span>${escapeHtml(f.n)}</span><span class="fs-cal">${f.c} cal</span></div>`).join("");
   box.classList.add("on");
 }
 
-function pickFood(name,cal){
-  document.getElementById("food-search").value=name;
-  document.getElementById("food-cal").value=cal;
+function pickFoodIdx(idx){
+  const f=FOOD_DB[idx];
+  if(!f)return;
+  document.getElementById("food-search").value=f.n;
+  document.getElementById("food-cal").value=f.c;
   document.getElementById("food-suggest").classList.remove("on");
-  foodPicked={name,cal};
+  // remember the per-serving macros for this pick
+  foodPicked={name:f.n,cal:f.c,p:f.p||0,cb:f.cb||0,f:f.f||0};
 }
 
 async function logFood(){
@@ -2139,8 +2175,20 @@ async function logFood(){
   if(!calPer||calPer<=0){showToast("Enter calories","err");return;}
   const calories=Math.round(calPer*qty);
   const row={user_id:U.id,log_date:todayKey(),name,calories,qty};
+  // attach macros only when they came from a known food (scaled by qty)
+  if(foodPicked&&foodPicked.name===name){
+    row.protein=Math.round((foodPicked.p||0)*qty);
+    row.carbs=Math.round((foodPicked.cb||0)*qty);
+    row.fat=Math.round((foodPicked.f||0)*qty);
+  }
   try{
-    const{data,error}=await db.from("food_logs").insert(row).select().single();
+    let data,error;
+    ({data,error}=await db.from("food_logs").insert(row).select().single());
+    // if macro columns do not exist yet, retry without them so logging never breaks
+    if(error&&/column|macros|protein|carbs|fat/i.test(error.message||"")){
+      const {protein,carbs,fat,...base}=row;
+      ({data,error}=await db.from("food_logs").insert(base).select().single());
+    }
     if(error)throw error;
     FOODLOG.push(data);
     renderFoodLog();
@@ -3484,7 +3532,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.1";
+const APP_VERSION = "2026.06.05.2";
 
 async function checkForUpdate(){
   try{
