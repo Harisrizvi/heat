@@ -88,6 +88,13 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .fast-elapsed{font-family:Oswald,sans-serif;font-size:28px;font-weight:600;color:var(--t1);}
 .fast-sub{font-size:12px;color:var(--t3);margin-top:2px;}
 .fast-info{font-size:13px;color:var(--t2);text-align:center;}
+.fast-mode-toggle{display:flex;gap:8px;margin-bottom:14px;}
+.fast-mode-btn{flex:1;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:9px;font-weight:600;font-size:13px;cursor:pointer;}
+.fast-mode-btn.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
+.ramadan-times{display:flex;gap:10px;width:100%;}
+.ramadan-time{flex:1;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--t3);font-weight:600;}
+.ramadan-time input{background:var(--s2);border:1px solid var(--s3);color:var(--t1);border-radius:var(--rs);padding:8px;font-size:14px;}
+.ramadan-tips{font-size:12px;color:var(--t2);line-height:1.45;text-align:center;background:var(--s2);border-radius:var(--rs);padding:10px;}
 .standing{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
 .standing-hd{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;}
 .standing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -2364,6 +2371,13 @@ let FAST_SELECTED="16_8";
 function renderFasting(){
   const el=document.getElementById("fasting-body");
   if(!el)return;
+  // Mode toggle: standard intermittent fasting vs Ramadan mode
+  const toggle=`
+    <div class="fast-mode-toggle">
+      <button class="fast-mode-btn${!RAMADAN.on?' on':''}" onclick="setFastMode(false)">Intermittent</button>
+      <button class="fast-mode-btn${RAMADAN.on?' on':''}" onclick="setFastMode(true)">🌙 Ramadan</button>
+    </div>`;
+  if(RAMADAN.on){ el.innerHTML=toggle+renderRamadan(); return; }
   if(FAST_STATE){
     const preset=FAST_PRESETS.find(p=>p.id===FAST_STATE.presetId)||FAST_PRESETS[0];
     const goalMs=preset.fast*3600*1000;
@@ -2373,7 +2387,7 @@ function renderFasting(){
     const remaining=Math.max(0,goalMs-elapsed);
     const fmt=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
     const R=52,C=2*Math.PI*R;
-    el.innerHTML=`
+    el.innerHTML=toggle+`
       <div class="fast-active">
         <div class="fast-ring-wrap">
           <svg viewBox="0 0 120 120" class="fast-ring">
@@ -2390,7 +2404,7 @@ function renderFasting(){
         <button class="fast-btn fast-stop" onclick="stopFast()">End Fast</button>
       </div>`;
   }else{
-    el.innerHTML=`
+    el.innerHTML=toggle+`
       <div class="fast-idle">
         <div class="fast-pick-lbl">Choose a fasting protocol</div>
         <div class="fast-presets">${FAST_PRESETS.map(p=>`<button class="fast-preset${p.id===FAST_SELECTED?' on':''}" onclick="selectFast('${p.id}')">${p.name}</button>`).join("")}</div>
@@ -2422,17 +2436,96 @@ function stopFast(){
 }
 function startFastTick(){
   if(FAST_TICK)clearInterval(FAST_TICK);
-  if(!FAST_STATE)return;
+  if(!FAST_STATE&&!RAMADAN.on)return;
   FAST_TICK=setInterval(()=>{
-    if(!FAST_STATE){clearInterval(FAST_TICK);FAST_TICK=null;return;}
+    if(!FAST_STATE&&!RAMADAN.on){clearInterval(FAST_TICK);FAST_TICK=null;return;}
     renderFasting();
   },1000);
 }
 function initFasting(){
   loadFastState();
+  loadRamadan();
   renderFasting();
-  if(FAST_STATE)startFastTick();
+  if(FAST_STATE&&!RAMADAN.on)startFastTick();
+  if(RAMADAN.on)startFastTick();
 }
+
+// ===== Ramadan Mode =====
+// User sets local Suhoor (pre-dawn) and Iftar (sunset) times. Structure is
+// ready for an automatic prayer-times API later, but user-set times are
+// accurate for their location today without any dependency.
+let RAMADAN={on:false,suhoor:"04:30",iftar:"18:45"};
+function ramadanKey(){return "ritual_ramadan_"+(U?U.id:"x");}
+function loadRamadan(){
+  try{const raw=localStorage.getItem(ramadanKey());if(raw)RAMADAN=Object.assign(RAMADAN,JSON.parse(raw));}catch(e){}
+}
+function saveRamadan(){try{localStorage.setItem(ramadanKey(),JSON.stringify(RAMADAN));}catch(e){}}
+function setFastMode(ram){
+  RAMADAN.on=ram;saveRamadan();
+  renderFasting();
+  if(ram)startFastTick(); // reuse the per-second tick to update the countdown
+  else if(!FAST_STATE&&FAST_TICK){clearInterval(FAST_TICK);FAST_TICK=null;}
+}
+function setRamadanTime(which,val){
+  if(which==="suhoor")RAMADAN.suhoor=val; else RAMADAN.iftar=val;
+  saveRamadan();renderFasting();
+}
+// returns ms until the next occurrence of HH:MM today/tomorrow
+function msUntil(hhmm){
+  const [h,m]=hhmm.split(":").map(Number);
+  const now=new Date();
+  const t=new Date();t.setHours(h,m,0,0);
+  if(t<=now)t.setDate(t.getDate()+1);
+  return t-now;
+}
+function renderRamadan(){
+  const now=new Date();
+  const [sh,sm]=RAMADAN.suhoor.split(":").map(Number);
+  const [ih,im]=RAMADAN.iftar.split(":").map(Number);
+  const suhoorMin=sh*60+sm, iftarMin=ih*60+im, nowMin=now.getHours()*60+now.getMinutes();
+  // fasting window is roughly Suhoor -> Iftar; eating window Iftar -> next Suhoor
+  const fasting = nowMin>=suhoorMin && nowMin<iftarMin;
+  const fmt=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
+  let ringTxt,sub,target,R=52,C=2*Math.PI*R,frac=0,stroke="var(--acc)";
+  if(fasting){
+    // counting down to Iftar
+    const total=(iftarMin-suhoorMin)*60*1000;
+    const done=(nowMin-suhoorMin)*60*1000 + now.getSeconds()*1000;
+    frac=Math.max(0,Math.min(1,done/total));
+    target=msUntil(RAMADAN.iftar);
+    ringTxt=fmt(target);sub="until Iftar";
+  }else{
+    // eating window, counting to next Suhoor
+    target=msUntil(RAMADAN.suhoor);
+    ringTxt=fmt(target);sub="until Suhoor";stroke="var(--gr)";frac=1;
+  }
+  return `
+    <div class="fast-active">
+      <div class="fast-ring-wrap">
+        <svg viewBox="0 0 120 120" class="fast-ring">
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--s3)" stroke-width="8"/>
+          <circle cx="60" cy="60" r="${R}" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
+        </svg>
+        <div class="fast-ring-txt">
+          <div class="fast-elapsed">${ringTxt}</div>
+          <div class="fast-sub">${sub}</div>
+        </div>
+      </div>
+      <div class="fast-info">${fasting?"Fasting now 🌙":"Eating window 🍽️"} · Suhoor ${RAMADAN.suhoor} · Iftar ${RAMADAN.iftar}</div>
+      <div class="ramadan-times">
+        <label class="ramadan-time"><span>Suhoor</span><input type="time" value="${RAMADAN.suhoor}" onchange="setRamadanTime('suhoor',this.value)"></label>
+        <label class="ramadan-time"><span>Iftar</span><input type="time" value="${RAMADAN.iftar}" onchange="setRamadanTime('iftar',this.value)"></label>
+      </div>
+      <div class="ramadan-tips">
+        ${fasting
+          ? "Tip: schedule training close to Iftar so you can refuel right after. Rest if you feel light-headed."
+          : "Tip: hydrate steadily between Iftar and Suhoor (aim for your water goal), and prioritize protein and slow carbs at Suhoor."}
+      </div>
+      <div class="fast-note">Set your local Suhoor and Iftar times above. Ramadan fasting is a personal and medical matter; if you are unwell, pregnant, or managing a condition, follow medical and religious guidance.</div>
+    </div>`;
+}
+
 
 
 async function changeWater(d){
@@ -3701,7 +3794,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.4";
+const APP_VERSION = "2026.06.05.5";
 
 async function checkForUpdate(){
   try{
