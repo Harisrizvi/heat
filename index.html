@@ -6,6 +6,7 @@
 <title>RITUAL</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -53,6 +54,10 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .food-log-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
 .cal-arc-over{stroke:var(--re)!important;}
 .macro-row{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;}
+.scan-btn{width:100%;background:var(--s2);border:1px solid var(--s3);color:var(--acc);border-radius:var(--rs);padding:11px;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:10px;}
+.scan-btn:active{transform:scale(.99);}
+.scan-viewport{width:100%;min-height:200px;background:var(--s2);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.scan-status{font-size:13px;color:var(--t2);text-align:center;margin-top:12px;line-height:1.4;}
 .macro-item{display:flex;flex-direction:column;gap:5px;}
 .macro-top{display:flex;justify-content:space-between;align-items:baseline;}
 .macro-lbl{font-size:12px;color:var(--t2);font-weight:600;}
@@ -241,6 +246,16 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .ilg-w{color:var(--acc);}
 .ilg-c{color:#60a5fa;}
 .insight-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.report-week{font-size:12px;color:var(--t3);margin-bottom:14px;}
+.report-empty{font-size:13px;color:var(--t3);line-height:1.5;padding:8px 0;}
+.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.report-cell{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center;}
+.report-val{font-family:Oswald,sans-serif;font-size:24px;font-weight:600;color:var(--t1);line-height:1;}
+.report-val.good{color:var(--acc);}
+.report-val.caution{color:var(--am);}
+.report-lbl{font-size:11px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;}
+.report-sub{font-size:10px;color:var(--t3);margin-top:2px;}
+.report-note{font-size:13px;color:var(--t2);line-height:1.45;text-align:center;background:var(--s2);border-radius:var(--rs);padding:12px;}
 .ist{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center;}
 .ist-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
 .ist-val{font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin:3px 0;}
@@ -788,6 +803,18 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   </div>
 </div>
 
+<div id="scan-modal" class="plan-modal">
+  <div class="plan-modal-inner">
+    <div class="plan-modal-hd">
+      <div class="plan-modal-title">Scan Barcode</div>
+      <button class="plan-modal-close" onclick="closeScanner()">✕</button>
+    </div>
+    <div id="scan-viewport" class="scan-viewport"></div>
+    <div id="scan-status" class="scan-status">Point your camera at a product barcode.</div>
+    <div class="fast-note" style="margin-top:10px">Works best on packaged products. Many local items may not be in the free database, you can always type those in manually.</div>
+  </div>
+</div>
+
 <div id="ex-modal" class="plan-modal">
   <div class="plan-modal-inner">
     <div class="plan-modal-hd">
@@ -1099,6 +1126,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       </div>
       <div class="cal-meta"><span id="cal-left">2000 left</span><button class="cal-editbtn" onclick="editCalTarget()">Edit target</button></div>
       <div class="cal-loginput">
+        <button class="scan-btn" onclick="openScanner()">📷 Scan barcode</button>
         <input type="text" class="finput" id="food-search" placeholder="Search or type a food..." oninput="onFoodSearch()" autocomplete="off">
         <div id="food-suggest" class="food-suggest"></div>
         <div class="cal-row2">
@@ -1182,6 +1210,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <div class="pg-title">Progress</div>
     <div class="pg-sub" id="prog-sub">How you're doing over time</div>
     <div class="insight-coach reveal" id="insight-coach"></div>
+    <div class="card reveal" id="report-card"></div>
     <div class="card reveal" id="insight-chart-card">
       <div class="card-lbl">Weight vs Calorie Balance</div>
       <div class="insight-chart-sub" id="insight-chart-sub"></div>
@@ -2280,6 +2309,75 @@ async function logFood(){
   }catch(e){showToast("Could not save: "+e.message,"err");}
 }
 
+// ===== Barcode Scanner =====
+// Uses the free ZXing library to read a barcode from the camera, then looks it
+// up in the free Open Food Facts database (no key). Falls back gracefully to
+// manual entry when a product is not found (common for local items).
+let _scanReader=null, _scanActive=false;
+async function openScanner(){
+  const modal=document.getElementById("scan-modal");
+  const status=document.getElementById("scan-status");
+  const vp=document.getElementById("scan-viewport");
+  if(typeof ZXing==="undefined"){showToast("Scanner is still loading, try again in a moment","err");return;}
+  modal.classList.add("on");
+  status.textContent="Starting camera...";
+  vp.innerHTML='<video id="scan-video" playsinline style="width:100%;border-radius:10px;"></video>';
+  try{
+    _scanReader=new ZXing.BrowserMultiFormatReader();
+    _scanActive=true;
+    const devices=await _scanReader.listVideoInputDevices();
+    let deviceId=null;
+    const back=devices.find(d=>/back|rear|environment/i.test(d.label));
+    deviceId=back?back.deviceId:(devices[0]?devices[0].deviceId:null);
+    status.textContent="Point your camera at a product barcode.";
+    _scanReader.decodeFromVideoDevice(deviceId,"scan-video",(result)=>{
+      if(result&&_scanActive){
+        _scanActive=false;
+        lookupBarcode(result.getText());
+      }
+    });
+  }catch(e){
+    status.textContent="Could not access the camera. Check camera permissions, or type the food in manually.";
+  }
+}
+function closeScanner(){
+  _scanActive=false;
+  try{if(_scanReader){_scanReader.reset();_scanReader=null;}}catch(e){}
+  document.getElementById("scan-modal").classList.remove("on");
+}
+async function lookupBarcode(code){
+  const status=document.getElementById("scan-status");
+  status.textContent="Looking up "+code+"...";
+  try{
+    const res=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,nutriments,serving_size");
+    const data=await res.json();
+    if(data&&data.status===1&&data.product){
+      const p=data.product;
+      const name=p.product_name||("Product "+code);
+      const n=p.nutriments||{};
+      let cal=n["energy-kcal_serving"]||n["energy-kcal_100g"]||n["energy-kcal"]||0;
+      cal=Math.round(Number(cal)||0);
+      const prot=Math.round(Number(n["proteins_serving"]||n["proteins_100g"]||0));
+      const carb=Math.round(Number(n["carbohydrates_serving"]||n["carbohydrates_100g"]||0));
+      const fat=Math.round(Number(n["fat_serving"]||n["fat_100g"]||0));
+      if(cal>0){
+        document.getElementById("food-search").value=name;
+        document.getElementById("food-cal").value=cal;
+        document.getElementById("food-qty").value="1";
+        foodPicked={name,cal,p:prot,cb:carb,f:fat};
+        closeScanner();
+        showToast("Found: "+name+" ("+cal+" cal). Tap Add to log it.","ok");
+        return;
+      }
+    }
+    status.textContent="Not found in the free database. Tap the X and type this item in manually.";
+    setTimeout(()=>{if(document.getElementById("scan-modal").classList.contains("on")){_scanActive=true;status.textContent="Point your camera at a product barcode.";}},2800);
+  }catch(e){
+    status.textContent="Lookup failed. Check your connection, or type it in manually.";
+    setTimeout(()=>{_scanActive=true;},2800);
+  }
+}
+
 async function delFood(id){
   try{
     await db.from("food_logs").delete().eq("id",id);
@@ -2994,6 +3092,49 @@ async function buildInsights(){
   renderInsightCoach({avgCal,calTarget,estDeficit,workoutDays,waterDaysHit,weightChange,loggedDays:loggedCalDays.length});
   renderInsightStats({estDeficit,workoutDays,avgCal,loggedDays:loggedCalDays.length});
   renderInsightChart(weights,dailyCal,calTarget,days);
+  renderReportCard({avgCal,calTarget,workoutDays,waterDaysHit,weightChange,loggedDays:loggedCalDays.length,mon});
+}
+
+// Weekly report card: a zero-effort snapshot of what the user already logged.
+function renderReportCard(d){
+  const el=document.getElementById("report-card");
+  if(!el)return;
+  // Friendly week label, e.g. "Jun 9 to Jun 15"
+  const mon=d.mon||startOfWeekMonday(new Date());
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const mlbl=({0:"Jan",1:"Feb",2:"Mar",3:"Apr",4:"May",5:"Jun",6:"Jul",7:"Aug",8:"Sep",9:"Oct",10:"Nov",11:"Dec"});
+  const weekLabel=mlbl[mon.getMonth()]+" "+mon.getDate()+" to "+mlbl[sun.getMonth()]+" "+sun.getDate();
+  if(d.loggedDays===0){
+    el.innerHTML=`<div class="card-lbl">Weekly Report Card</div>
+      <div class="report-empty">Log a few days this week and your report card will appear here, summarizing your calories, water, workouts, and weight.</div>`;
+    return;
+  }
+  const wcSign=d.weightChange>0?"+":"";
+  const goal=((P&&P.plan_goal||"")+" "+(P&&P.goal||"")).toLowerCase();
+  const wantsLoss=goal.includes("fatloss")||goal.includes("lose");
+  const wantsGain=goal.includes("muscle")||goal.includes("gain");
+  let wcCls="";
+  if(d.weightChange!==null&&d.weightChange!==0){
+    if(wantsLoss)wcCls=d.weightChange<0?"good":"caution";
+    else if(wantsGain)wcCls=d.weightChange>0?"good":"caution";
+  }
+  // a short, honest encouraging line based on consistency
+  let note;
+  if(d.loggedDays>=6)note="Outstanding consistency this week. Showing up daily is the whole game.";
+  else if(d.loggedDays>=3)note="Solid week. A little more consistency and the results follow.";
+  else note="A start is a start. Try to log a few more days next week.";
+  const cell=(label,val,sub,cls)=>`<div class="report-cell"><div class="report-val ${cls||''}">${val}</div><div class="report-lbl">${label}</div>${sub?`<div class="report-sub">${sub}</div>`:""}</div>`;
+  el.innerHTML=`
+    <div class="card-lbl">Weekly Report Card</div>
+    <div class="report-week">${weekLabel}</div>
+    <div class="report-grid">
+      ${cell("Days logged",d.loggedDays+"/7","")}
+      ${cell("Avg calories",d.avgCal?d.avgCal.toLocaleString():"0","of "+d.calTarget.toLocaleString())}
+      ${cell("Workouts",d.workoutDays,"this week")}
+      ${cell("Water goal",d.waterDaysHit+"/7","days hit")}
+      ${d.weightChange!==null?cell("Weight",wcSign+d.weightChange+" kg","this week",wcCls):""}
+    </div>
+    <div class="report-note">${note}</div>`;
 }
 
 function renderInsightCoach(d){
@@ -3621,6 +3762,7 @@ function showScreen(name){
 }
 
 function showPage(name){
+  if(typeof _scanActive!=="undefined"&&_scanReader){try{closeScanner();}catch(e){}}
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".bni").forEach(b=>b.classList.remove("on"));
   const pg=document.getElementById("page-"+name);
@@ -3794,7 +3936,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.5";
+const APP_VERSION = "2026.06.05.7";
 
 async function checkForUpdate(){
   try{
