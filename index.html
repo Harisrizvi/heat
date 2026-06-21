@@ -6,7 +6,7 @@
 <title>RITUAL</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -58,6 +58,9 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .scan-btn:active{transform:scale(.99);}
 .scan-viewport{width:100%;min-height:200px;background:var(--s2);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
 .scan-status{font-size:13px;color:var(--t2);text-align:center;margin-top:12px;line-height:1.4;}
+.scan-torch{display:block;width:100%;margin-top:10px;background:var(--s3);border:1px solid var(--s4);color:var(--t1);border-radius:var(--rs);padding:10px;font-weight:600;font-size:13px;cursor:pointer;}
+.scan-manual-link{display:block;width:100%;margin-top:8px;background:none;border:none;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;}
+.scan-manual{display:flex;gap:8px;padding:20px;width:100%;}
 .macro-item{display:flex;flex-direction:column;gap:5px;}
 .macro-top{display:flex;justify-content:space-between;align-items:baseline;}
 .macro-lbl{font-size:12px;color:var(--t2);font-weight:600;}
@@ -810,8 +813,10 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       <button class="plan-modal-close" onclick="closeScanner()">✕</button>
     </div>
     <div id="scan-viewport" class="scan-viewport"></div>
+    <button id="scan-torch" class="scan-torch" style="display:none">🔦 Torch</button>
     <div id="scan-status" class="scan-status">Point your camera at a product barcode.</div>
-    <div class="fast-note" style="margin-top:10px">Works best on packaged products. Many local items may not be in the free database, you can always type those in manually.</div>
+    <button class="scan-manual-link" onclick="showManualEntry()">Type the barcode instead</button>
+    <div class="fast-note" style="margin-top:6px">Works best on packaged products. Many local items may not be in the free database, you can always type those in manually.</div>
   </div>
 </div>
 
@@ -2310,71 +2315,110 @@ async function logFood(){
 }
 
 // ===== Barcode Scanner =====
-// Uses the free ZXing library to read a barcode from the camera, then looks it
-// up in the free Open Food Facts database (no key). Falls back gracefully to
-// manual entry when a product is not found (common for local items).
-let _scanReader=null, _scanActive=false;
+// Uses html5-qrcode, which prefers the browser's native BarcodeDetector when
+// available (fast, accurate) and falls back to ZXing otherwise. Includes a
+// torch toggle for low light and a manual entry fallback. Looks products up in
+// the free Open Food Facts database (no key).
+let _scanner=null, _scanRunning=false, _scanTrack=null, _torchOn=false;
 async function openScanner(){
   const modal=document.getElementById("scan-modal");
   const status=document.getElementById("scan-status");
-  const vp=document.getElementById("scan-viewport");
-  if(typeof ZXing==="undefined"){showToast("Scanner is still loading, try again in a moment","err");return;}
+  if(typeof Html5Qrcode==="undefined"){showToast("Scanner is still loading, try again in a moment","err");return;}
   modal.classList.add("on");
   status.textContent="Starting camera...";
-  vp.innerHTML='<video id="scan-video" playsinline style="width:100%;border-radius:10px;"></video>';
+  document.getElementById("scan-viewport").innerHTML='<div id="scan-reader" style="width:100%"></div>';
+  document.getElementById("scan-torch").style.display="none";
   try{
-    _scanReader=new ZXing.BrowserMultiFormatReader();
-    _scanActive=true;
-    const devices=await _scanReader.listVideoInputDevices();
-    let deviceId=null;
-    const back=devices.find(d=>/back|rear|environment/i.test(d.label));
-    deviceId=back?back.deviceId:(devices[0]?devices[0].deviceId:null);
-    status.textContent="Point your camera at a product barcode.";
-    _scanReader.decodeFromVideoDevice(deviceId,"scan-video",(result)=>{
-      if(result&&_scanActive){
-        _scanActive=false;
-        lookupBarcode(result.getText());
-      }
+    _scanner=new Html5Qrcode("scan-reader",{
+      formatsToSupport:[
+        Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39
+      ],
+      useBarCodeDetectorIfSupported:true
     });
+    _scanRunning=true;
+    await _scanner.start(
+      {facingMode:"environment"},
+      {fps:10,qrbox:{width:260,height:160},aspectRatio:1.4},
+      (decoded)=>{ if(_scanRunning){_scanRunning=false; lookupBarcode(decoded);} },
+      ()=>{}
+    );
+    status.textContent="Point your camera at a product barcode.";
+    // torch support (if the device exposes it)
+    setupTorch();
   }catch(e){
-    status.textContent="Could not access the camera. Check camera permissions, or type the food in manually.";
+    status.textContent="Could not access the camera. You can type the barcode in below, or add the food manually.";
+    showManualEntry();
   }
 }
-function closeScanner(){
-  _scanActive=false;
-  try{if(_scanReader){_scanReader.reset();_scanReader=null;}}catch(e){}
+function setupTorch(){
+  try{
+    const btn=document.getElementById("scan-torch");
+    // html5-qrcode exposes torch via applyVideoConstraints on capable devices
+    if(_scanner&&_scanner.getRunningTrackCameraCapabilities){
+      const caps=_scanner.getRunningTrackCameraCapabilities();
+      if(caps&&caps.torchFeature&&caps.torchFeature().isSupported()){
+        btn.style.display="block";
+        btn.onclick=async()=>{
+          _torchOn=!_torchOn;
+          try{await caps.torchFeature().apply(_torchOn);btn.textContent=_torchOn?"🔦 Torch on":"🔦 Torch";}catch(e){}
+        };
+      }
+    }
+  }catch(e){}
+}
+async function closeScanner(){
+  _scanRunning=false;
+  try{ if(_scanner){await _scanner.stop();await _scanner.clear();_scanner=null;} }catch(e){}
+  _torchOn=false;
   document.getElementById("scan-modal").classList.remove("on");
+}
+function showManualEntry(){
+  const vp=document.getElementById("scan-viewport");
+  vp.innerHTML=`<div class="scan-manual">
+    <input type="text" inputmode="numeric" class="finput" id="scan-manual-code" placeholder="Enter barcode number">
+    <button class="cal-addbtn" onclick="manualLookup()">Look up</button>
+  </div>`;
+}
+function manualLookup(){
+  const code=(document.getElementById("scan-manual-code").value||"").trim();
+  if(!code){showToast("Enter a barcode number","err");return;}
+  lookupBarcode(code);
 }
 async function lookupBarcode(code){
   const status=document.getElementById("scan-status");
   status.textContent="Looking up "+code+"...";
   try{
-    const res=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,nutriments,serving_size");
+    const res=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,brands,nutriments,serving_size");
     const data=await res.json();
     if(data&&data.status===1&&data.product){
       const p=data.product;
-      const name=p.product_name||("Product "+code);
       const n=p.nutriments||{};
-      let cal=n["energy-kcal_serving"]||n["energy-kcal_100g"]||n["energy-kcal"]||0;
-      cal=Math.round(Number(cal)||0);
-      const prot=Math.round(Number(n["proteins_serving"]||n["proteins_100g"]||0));
-      const carb=Math.round(Number(n["carbohydrates_serving"]||n["carbohydrates_100g"]||0));
-      const fat=Math.round(Number(n["fat_serving"]||n["fat_100g"]||0));
+      const name=(p.brands?p.brands.split(",")[0]+" ":"")+(p.product_name||("Product "+code));
+      const calServ=Number(n["energy-kcal_serving"])||0;
+      const cal100=Number(n["energy-kcal_100g"])||0;
+      const useServing=calServ>0;
+      const cal=Math.round(useServing?calServ:cal100);
+      const prot=Math.round(Number(useServing?n["proteins_serving"]:n["proteins_100g"])||0);
+      const carb=Math.round(Number(useServing?n["carbohydrates_serving"]:n["carbohydrates_100g"])||0);
+      const fat=Math.round(Number(useServing?n["fat_serving"]:n["fat_100g"])||0);
       if(cal>0){
+        const portionNote=useServing?(p.serving_size?("per serving ("+p.serving_size+")"):"per serving"):"per 100g, adjust quantity if needed";
         document.getElementById("food-search").value=name;
         document.getElementById("food-cal").value=cal;
         document.getElementById("food-qty").value="1";
         foodPicked={name,cal,p:prot,cb:carb,f:fat};
-        closeScanner();
-        showToast("Found: "+name+" ("+cal+" cal). Tap Add to log it.","ok");
+        await closeScanner();
+        showToast("Found: "+name+" ("+cal+" cal, "+portionNote+"). Tap Add.","ok");
         return;
       }
     }
-    status.textContent="Not found in the free database. Tap the X and type this item in manually.";
-    setTimeout(()=>{if(document.getElementById("scan-modal").classList.contains("on")){_scanActive=true;status.textContent="Point your camera at a product barcode.";}},2800);
+    status.textContent="Not found in the free database. Type the barcode below, or add it manually after closing.";
+    showManualEntry();
   }catch(e){
-    status.textContent="Lookup failed. Check your connection, or type it in manually.";
-    setTimeout(()=>{_scanActive=true;},2800);
+    status.textContent="Lookup failed. Check your connection, or add the item manually.";
+    showManualEntry();
   }
 }
 
@@ -3762,7 +3806,7 @@ function showScreen(name){
 }
 
 function showPage(name){
-  if(typeof _scanActive!=="undefined"&&_scanReader){try{closeScanner();}catch(e){}}
+  if(typeof _scanner!=="undefined"&&_scanner){try{closeScanner();}catch(e){}}
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".bni").forEach(b=>b.classList.remove("on"));
   const pg=document.getElementById("page-"+name);
@@ -3936,7 +3980,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.7";
+const APP_VERSION = "2026.06.05.8";
 
 async function checkForUpdate(){
   try{
