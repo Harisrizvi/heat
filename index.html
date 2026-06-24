@@ -6,7 +6,6 @@
 <title>RITUAL</title>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -54,13 +53,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .food-log-del{background:none;border:none;color:var(--re);cursor:pointer;font-size:16px;line-height:1;padding:0 2px;}
 .cal-arc-over{stroke:var(--re)!important;}
 .macro-row{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;}
-.scan-btn{width:100%;background:var(--s2);border:1px solid var(--s3);color:var(--acc);border-radius:var(--rs);padding:11px;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:10px;}
-.scan-btn:active{transform:scale(.99);}
-.scan-viewport{width:100%;min-height:200px;background:var(--s2);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
-.scan-status{font-size:13px;color:var(--t2);text-align:center;margin-top:12px;line-height:1.4;}
-.scan-torch{display:block;width:100%;margin-top:10px;background:var(--s3);border:1px solid var(--s4);color:var(--t1);border-radius:var(--rs);padding:10px;font-weight:600;font-size:13px;cursor:pointer;}
-.scan-manual-link{display:block;width:100%;margin-top:8px;background:none;border:none;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;}
-.scan-manual{display:flex;gap:8px;padding:20px;width:100%;}
 .macro-item{display:flex;flex-direction:column;gap:5px;}
 .macro-top{display:flex;justify-content:space-between;align-items:baseline;}
 .macro-lbl{font-size:12px;color:var(--t2);font-weight:600;}
@@ -78,31 +70,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .water-btn{flex:1;background:var(--s3);color:var(--t1);border:1px solid var(--s4);border-radius:var(--rs);padding:10px;font-size:14px;font-weight:600;cursor:pointer;}
 .water-btn-add{background:var(--acc);color:var(--bg);border-color:var(--acc);}
 .water-each{font-size:11px;color:var(--t3);white-space:nowrap;}
-.fast-idle{display:flex;flex-direction:column;align-items:center;gap:12px;}
-.fast-pick-lbl{font-size:12px;color:var(--t2);font-weight:600;align-self:flex-start;}
-.fast-presets{display:flex;gap:8px;flex-wrap:wrap;width:100%;}
-.fast-preset{flex:1;min-width:56px;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:10px 6px;font-weight:700;font-size:13px;cursor:pointer;}
-.fast-preset.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
-.fast-desc{font-size:12px;color:var(--t3);text-align:center;line-height:1.4;min-height:34px;}
-.fast-btn{width:100%;border:none;border-radius:var(--rs);padding:13px;font-weight:700;font-size:14px;cursor:pointer;}
-.fast-btn:active{transform:scale(.99);}
-.fast-start{background:var(--acc);color:var(--bg);}
-.fast-stop{background:var(--s3);color:var(--t1);border:1px solid var(--s4);}
-.fast-note{font-size:10px;color:var(--t3);line-height:1.4;text-align:center;}
-.fast-active{display:flex;flex-direction:column;align-items:center;gap:14px;}
-.fast-ring-wrap{position:relative;width:160px;height:160px;}
-.fast-ring{width:100%;height:100%;}
-.fast-ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.fast-elapsed{font-family:Oswald,sans-serif;font-size:28px;font-weight:600;color:var(--t1);}
-.fast-sub{font-size:12px;color:var(--t3);margin-top:2px;}
-.fast-info{font-size:13px;color:var(--t2);text-align:center;}
-.fast-mode-toggle{display:flex;gap:8px;margin-bottom:14px;}
-.fast-mode-btn{flex:1;background:var(--s2);border:1px solid var(--s3);color:var(--t2);border-radius:var(--rs);padding:9px;font-weight:600;font-size:13px;cursor:pointer;}
-.fast-mode-btn.on{background:var(--acc);color:var(--bg);border-color:var(--acc);}
-.ramadan-times{display:flex;gap:10px;width:100%;}
-.ramadan-time{flex:1;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--t3);font-weight:600;}
-.ramadan-time input{background:var(--s2);border:1px solid var(--s3);color:var(--t1);border-radius:var(--rs);padding:8px;font-size:14px;}
-.ramadan-tips{font-size:12px;color:var(--t2);line-height:1.45;text-align:center;background:var(--s2);border-radius:var(--rs);padding:10px;}
 .standing{background:var(--s1);border:1px solid var(--s3);border-radius:var(--rl);padding:16px;margin-bottom:14px;}
 .standing-hd{font-family:Oswald,sans-serif;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;}
 .standing-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -249,16 +216,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
 .ilg-w{color:var(--acc);}
 .ilg-c{color:#60a5fa;}
 .insight-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-.report-week{font-size:12px;color:var(--t3);margin-bottom:14px;}
-.report-empty{font-size:13px;color:var(--t3);line-height:1.5;padding:8px 0;}
-.report-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-.report-cell{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center;}
-.report-val{font-family:Oswald,sans-serif;font-size:24px;font-weight:600;color:var(--t1);line-height:1;}
-.report-val.good{color:var(--acc);}
-.report-val.caution{color:var(--am);}
-.report-lbl{font-size:11px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:6px;}
-.report-sub{font-size:10px;color:var(--t3);margin-top:2px;}
-.report-note{font-size:13px;color:var(--t2);line-height:1.45;text-align:center;background:var(--s2);border-radius:var(--rs);padding:12px;}
 .ist{background:var(--s2);border-radius:var(--rs);padding:14px;text-align:center;}
 .ist-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
 .ist-val{font-family:Oswald,sans-serif;font-size:24px;font-weight:700;margin:3px 0;}
@@ -806,20 +763,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
   </div>
 </div>
 
-<div id="scan-modal" class="plan-modal">
-  <div class="plan-modal-inner">
-    <div class="plan-modal-hd">
-      <div class="plan-modal-title">Scan Barcode</div>
-      <button class="plan-modal-close" onclick="closeScanner()">✕</button>
-    </div>
-    <div id="scan-viewport" class="scan-viewport"></div>
-    <button id="scan-torch" class="scan-torch" style="display:none">🔦 Torch</button>
-    <div id="scan-status" class="scan-status">Point your camera at a product barcode.</div>
-    <button class="scan-manual-link" onclick="showManualEntry()">Type the barcode instead</button>
-    <div class="fast-note" style="margin-top:6px">Works best on packaged products. Many local items may not be in the free database, you can always type those in manually.</div>
-  </div>
-</div>
-
 <div id="ex-modal" class="plan-modal">
   <div class="plan-modal-inner">
     <div class="plan-modal-hd">
@@ -1015,7 +958,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
           <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-water-arc" cx="22" cy="22" r="18" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
           <div class="stile-info"><div class="stile-lbl">Water</div><div class="stile-val" id="st-water">0 / 0 L</div></div>
         </div>
-        <div class="stile" onclick="scrollToHabits()">
+        <div class="stile" onclick="showPage('habits')">
           <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-hab-arc" cx="22" cy="22" r="18" fill="none" stroke="#3dd68c" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
           <div class="stile-info"><div class="stile-lbl">Habits</div><div class="stile-val" id="st-hab">0 / 0</div></div>
         </div>
@@ -1131,7 +1074,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
       </div>
       <div class="cal-meta"><span id="cal-left">2000 left</span><button class="cal-editbtn" onclick="editCalTarget()">Edit target</button></div>
       <div class="cal-loginput">
-        <button class="scan-btn" onclick="openScanner()">📷 Scan barcode</button>
         <input type="text" class="finput" id="food-search" placeholder="Search or type a food..." oninput="onFoodSearch()" autocomplete="off">
         <div id="food-suggest" class="food-suggest"></div>
         <div class="cal-row2">
@@ -1155,10 +1097,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
         <button class="water-btn water-btn-add" onclick="changeWater(1)">+ Glass</button>
         <span class="water-each">1 glass ≈ 250 ml</span>
       </div>
-    </div>
-    <div class="card reveal" id="fasting-card">
-      <div class="card-lbl">Fasting</div>
-      <div id="fasting-body"></div>
     </div>
     <div class="card reveal">
       <div class="card-lbl">AI Diet Plan</div>
@@ -1215,7 +1153,6 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
     <div class="pg-title">Progress</div>
     <div class="pg-sub" id="prog-sub">How you're doing over time</div>
     <div class="insight-coach reveal" id="insight-coach"></div>
-    <div class="card reveal" id="report-card"></div>
     <div class="card reveal" id="insight-chart-card">
       <div class="card-lbl">Weight vs Calorie Balance</div>
       <div class="insight-chart-sub" id="insight-chart-sub"></div>
@@ -1534,57 +1471,6 @@ const MOT=[
 
 function getTD(){if(!SD)return 0;const s=new Date(SD),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);return Math.floor((t-s)/86400000)+1;}
 function getStreak(){const td=getTD();let s=0;for(let i=td-1;i>=0;i--){if(PROG[i]&&PROG[i].completed)s++;else break;}return s;}
-
-// ===== Streak Shields =====
-// A shield protects a streak from a single missed day. The user earns one
-// shield for every 7 completed days (max 3 held). When counting the streak,
-// a single-day gap is bridged if a shield is available, so one slip does not
-// reset everything. This is stored per-user in localStorage.
-function shieldKey(){return "ritual_shields_"+(U?U.id:"x");}
-function getShieldData(){
-  try{const raw=localStorage.getItem(shieldKey());return raw?JSON.parse(raw):{shields:0,usedDays:[]};}catch(e){return {shields:0,usedDays:[]};}
-}
-function saveShieldData(d){try{localStorage.setItem(shieldKey(),JSON.stringify(d));}catch(e){}}
-// streak that tolerates single-day gaps when shields are available
-function getStreakShielded(){
-  const td=getTD();
-  const data=getShieldData();
-  let earned=Math.floor(getDone()/7);          // 1 shield per 7 completed days
-  let available=Math.min(3,Math.max(0,earned-(data.usedDays?data.usedDays.length:0)));
-  let streak=0;
-  for(let i=td-1;i>=0;i--){
-    if(PROG[i]&&PROG[i].completed){streak++;continue;}
-    // a gap: try to bridge with a shield (only single-day gaps)
-    if(available>0&&i>0&&PROG[i-1]&&PROG[i-1].completed){
-      available--;streak++; // shield keeps the streak alive across this day
-      continue;
-    }
-    break;
-  }
-  return streak;
-}
-function shieldsAvailable(){
-  const data=getShieldData();
-  const earned=Math.floor(getDone()/7);
-  return Math.min(3,Math.max(0,earned-(data.usedDays?data.usedDays.length:0)));
-}
-
-// ===== Milestone celebrations =====
-const STREAK_MILESTONES=[3,7,14,30,50,100];
-function checkStreakMilestone(streak){
-  if(!STREAK_MILESTONES.includes(streak))return;
-  const key="streak_"+streak;
-  const labels={3:"3-Day Streak!",7:"One Week Strong!",14:"Two Weeks!",30:"30-Day Streak!",50:"50 Days!",100:"100 Days!"};
-  const msgs={
-    3:"Three days in a row. The habit is forming.",
-    7:"A full week of showing up. This is how change happens.",
-    14:"Two weeks straight. You are building real momentum.",
-    30:"Thirty days. This is no longer a phase, it is who you are becoming.",
-    50:"Fifty days of consistency. Remarkable discipline.",
-    100:"One hundred days. You are in rare company now."
-  };
-  celebrate(labels[streak]||"Streak Milestone!",msgs[streak]||"Incredible consistency.","milestone_"+key);
-}
 function getDone(){return Object.values(PROG).filter(p=>p&&p.completed).length;}
 function getMissed(){const td=getTD();let m=0;for(let i=0;i<Math.min(td-1,40);i++)if(!PROG[i]||!PROG[i].completed)m++;return m;}
 function getDayDate(i){if(!SD)return null;const s=new Date(SD);s.setHours(0,0,0,0);s.setDate(s.getDate()+i);return s;}
@@ -1703,7 +1589,7 @@ async function loadHabs(){
 function renderHome(){
   const td=getTD();
   renderToday(td);renderStats(td);renderCal(td);renderMot(td);renderCards(td);
-  document.getElementById("nstreak").textContent=getStreakShielded()+" day streak";
+  document.getElementById("nstreak").textContent=getStreak()+" day streak";
   renderStanding();
   updatePlanCta();
   const hl=document.getElementById("thero-label");
@@ -1759,12 +1645,9 @@ function setArc(id,frac){
 async function renderStanding(){
   if(!P||!U)return;
   // Streak + habits are already in memory
-  const streak=getStreakShielded();
+  const streak=getStreak();
   document.getElementById("st-streak-n").textContent=streak;
-  const shields=shieldsAvailable();
-  const shieldTxt=shields>0?(" · "+shields+" 🛡️"):"";
-  document.getElementById("st-streak").textContent=streak+(streak===1?" day":" days")+shieldTxt;
-  checkStreakMilestone(streak);
+  document.getElementById("st-streak").textContent=streak+(streak===1?" day":" days");
   const totalHab=HABITS.length;
   const doneHab=HABITS.filter(h=>HLOGS[h.id]&&HLOGS[h.id].completed).length;
   document.getElementById("st-hab").textContent=doneHab+" / "+(totalHab||0);
@@ -2368,114 +2251,6 @@ async function logFood(){
   }catch(e){showToast("Could not save: "+e.message,"err");}
 }
 
-// ===== Barcode Scanner =====
-// Uses html5-qrcode, which prefers the browser's native BarcodeDetector when
-// available (fast, accurate) and falls back to ZXing otherwise. Includes a
-// torch toggle for low light and a manual entry fallback. Looks products up in
-// the free Open Food Facts database (no key).
-let _scanner=null, _scanRunning=false, _scanTrack=null, _torchOn=false;
-async function openScanner(){
-  const modal=document.getElementById("scan-modal");
-  const status=document.getElementById("scan-status");
-  if(typeof Html5Qrcode==="undefined"){showToast("Scanner is still loading, try again in a moment","err");return;}
-  modal.classList.add("on");
-  status.textContent="Starting camera...";
-  document.getElementById("scan-viewport").innerHTML='<div id="scan-reader" style="width:100%"></div>';
-  document.getElementById("scan-torch").style.display="none";
-  try{
-    _scanner=new Html5Qrcode("scan-reader",{
-      formatsToSupport:[
-        Html5QrcodeSupportedFormats.EAN_13,Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODE_128,Html5QrcodeSupportedFormats.CODE_39
-      ],
-      useBarCodeDetectorIfSupported:true
-    });
-    _scanRunning=true;
-    await _scanner.start(
-      {facingMode:"environment"},
-      {fps:10,qrbox:{width:260,height:160},aspectRatio:1.4},
-      (decoded)=>{ if(_scanRunning){_scanRunning=false; lookupBarcode(decoded);} },
-      ()=>{}
-    );
-    status.textContent="Point your camera at a product barcode.";
-    // torch support (if the device exposes it)
-    setupTorch();
-  }catch(e){
-    status.textContent="Could not access the camera. You can type the barcode in below, or add the food manually.";
-    showManualEntry();
-  }
-}
-function setupTorch(){
-  try{
-    const btn=document.getElementById("scan-torch");
-    // html5-qrcode exposes torch via applyVideoConstraints on capable devices
-    if(_scanner&&_scanner.getRunningTrackCameraCapabilities){
-      const caps=_scanner.getRunningTrackCameraCapabilities();
-      if(caps&&caps.torchFeature&&caps.torchFeature().isSupported()){
-        btn.style.display="block";
-        btn.onclick=async()=>{
-          _torchOn=!_torchOn;
-          try{await caps.torchFeature().apply(_torchOn);btn.textContent=_torchOn?"🔦 Torch on":"🔦 Torch";}catch(e){}
-        };
-      }
-    }
-  }catch(e){}
-}
-async function closeScanner(){
-  _scanRunning=false;
-  try{ if(_scanner){await _scanner.stop();await _scanner.clear();_scanner=null;} }catch(e){}
-  _torchOn=false;
-  document.getElementById("scan-modal").classList.remove("on");
-}
-function showManualEntry(){
-  const vp=document.getElementById("scan-viewport");
-  vp.innerHTML=`<div class="scan-manual">
-    <input type="text" inputmode="numeric" class="finput" id="scan-manual-code" placeholder="Enter barcode number">
-    <button class="cal-addbtn" onclick="manualLookup()">Look up</button>
-  </div>`;
-}
-function manualLookup(){
-  const code=(document.getElementById("scan-manual-code").value||"").trim();
-  if(!code){showToast("Enter a barcode number","err");return;}
-  lookupBarcode(code);
-}
-async function lookupBarcode(code){
-  const status=document.getElementById("scan-status");
-  status.textContent="Looking up "+code+"...";
-  try{
-    const res=await fetch("https://world.openfoodfacts.org/api/v2/product/"+encodeURIComponent(code)+".json?fields=product_name,brands,nutriments,serving_size");
-    const data=await res.json();
-    if(data&&data.status===1&&data.product){
-      const p=data.product;
-      const n=p.nutriments||{};
-      const name=(p.brands?p.brands.split(",")[0]+" ":"")+(p.product_name||("Product "+code));
-      const calServ=Number(n["energy-kcal_serving"])||0;
-      const cal100=Number(n["energy-kcal_100g"])||0;
-      const useServing=calServ>0;
-      const cal=Math.round(useServing?calServ:cal100);
-      const prot=Math.round(Number(useServing?n["proteins_serving"]:n["proteins_100g"])||0);
-      const carb=Math.round(Number(useServing?n["carbohydrates_serving"]:n["carbohydrates_100g"])||0);
-      const fat=Math.round(Number(useServing?n["fat_serving"]:n["fat_100g"])||0);
-      if(cal>0){
-        const portionNote=useServing?(p.serving_size?("per serving ("+p.serving_size+")"):"per serving"):"per 100g, adjust quantity if needed";
-        document.getElementById("food-search").value=name;
-        document.getElementById("food-cal").value=cal;
-        document.getElementById("food-qty").value="1";
-        foodPicked={name,cal,p:prot,cb:carb,f:fat};
-        await closeScanner();
-        showToast("Found: "+name+" ("+cal+" cal, "+portionNote+"). Tap Add.","ok");
-        return;
-      }
-    }
-    status.textContent="Not found in the free database. Type the barcode below, or add it manually after closing.";
-    showManualEntry();
-  }catch(e){
-    status.textContent="Lookup failed. Check your connection, or add the item manually.";
-    showManualEntry();
-  }
-}
-
 async function delFood(id){
   try{
     await db.from("food_logs").delete().eq("id",id);
@@ -2544,186 +2319,6 @@ function renderWater(){
   document.getElementById("water-glasses").innerHTML=html;
 }
 
-// ===== Fasting Timer =====
-// Well-known intermittent fasting protocols (fasting hours : eating hours).
-const FAST_PRESETS=[
-  {id:"16_8",name:"16:8",fast:16,desc:"16h fast, 8h eating window. The most popular and beginner-friendly."},
-  {id:"18_6",name:"18:6",fast:18,desc:"18h fast, 6h eating window. A step up from 16:8."},
-  {id:"20_4",name:"20:4",fast:20,desc:"20h fast, 4h window (Warrior Diet). For experienced fasters."},
-  {id:"omad",name:"OMAD",fast:23,desc:"One Meal A Day, about a 1h eating window. Advanced."},
-  {id:"14_10",name:"14:10",fast:14,desc:"14h fast, 10h window. Gentle, good for starting out."}
-];
-let FAST_STATE=null;   // {presetId, startTs} when active
-let FAST_TICK=null;
-
-function fastKey(){return "ritual_fast_"+(U?U.id:"x");}
-function loadFastState(){
-  try{const raw=localStorage.getItem(fastKey());FAST_STATE=raw?JSON.parse(raw):null;}catch(e){FAST_STATE=null;}
-}
-function saveFastState(){
-  try{if(FAST_STATE)localStorage.setItem(fastKey(),JSON.stringify(FAST_STATE));else localStorage.removeItem(fastKey());}catch(e){}
-}
-let FAST_SELECTED="16_8";
-function renderFasting(){
-  const el=document.getElementById("fasting-body");
-  if(!el)return;
-  // Mode toggle: standard intermittent fasting vs Ramadan mode
-  const toggle=`
-    <div class="fast-mode-toggle">
-      <button class="fast-mode-btn${!RAMADAN.on?' on':''}" onclick="setFastMode(false)">Intermittent</button>
-      <button class="fast-mode-btn${RAMADAN.on?' on':''}" onclick="setFastMode(true)">🌙 Ramadan</button>
-    </div>`;
-  if(RAMADAN.on){ el.innerHTML=toggle+renderRamadan(); return; }
-  if(FAST_STATE){
-    const preset=FAST_PRESETS.find(p=>p.id===FAST_STATE.presetId)||FAST_PRESETS[0];
-    const goalMs=preset.fast*3600*1000;
-    const elapsed=Date.now()-FAST_STATE.startTs;
-    const frac=Math.max(0,Math.min(1,elapsed/goalMs));
-    const reached=elapsed>=goalMs;
-    const remaining=Math.max(0,goalMs-elapsed);
-    const fmt=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
-    const R=52,C=2*Math.PI*R;
-    el.innerHTML=toggle+`
-      <div class="fast-active">
-        <div class="fast-ring-wrap">
-          <svg viewBox="0 0 120 120" class="fast-ring">
-            <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--s3)" stroke-width="8"/>
-            <circle cx="60" cy="60" r="${R}" fill="none" stroke="${reached?'var(--gr)':'var(--acc)'}" stroke-width="8" stroke-linecap="round"
-              stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
-          </svg>
-          <div class="fast-ring-txt">
-            <div class="fast-elapsed">${fmt(elapsed)}</div>
-            <div class="fast-sub">${reached?"Goal reached":fmt(remaining)+" left"}</div>
-          </div>
-        </div>
-        <div class="fast-info">${preset.name} fast · goal ${preset.fast}h${reached?" · you can eat now":""}</div>
-        <button class="fast-btn fast-stop" onclick="stopFast()">End Fast</button>
-      </div>`;
-  }else{
-    el.innerHTML=toggle+`
-      <div class="fast-idle">
-        <div class="fast-pick-lbl">Choose a fasting protocol</div>
-        <div class="fast-presets">${FAST_PRESETS.map(p=>`<button class="fast-preset${p.id===FAST_SELECTED?' on':''}" onclick="selectFast('${p.id}')">${p.name}</button>`).join("")}</div>
-        <div class="fast-desc">${(FAST_PRESETS.find(p=>p.id===FAST_SELECTED)||FAST_PRESETS[0]).desc}</div>
-        <button class="fast-btn fast-start" onclick="startFast()">Start Fast</button>
-        <div class="fast-note">Intermittent fasting is not suitable for everyone. If you are pregnant, diabetic, underweight, have a history of disordered eating, or take medication, consult a professional first.</div>
-      </div>`;
-  }
-}
-function selectFast(id){FAST_SELECTED=id;renderFasting();}
-function startFast(){
-  FAST_STATE={presetId:FAST_SELECTED,startTs:Date.now()};
-  saveFastState();
-  renderFasting();
-  startFastTick();
-}
-function stopFast(){
-  // celebrate if they reached the goal
-  if(FAST_STATE){
-    const preset=FAST_PRESETS.find(p=>p.id===FAST_STATE.presetId)||FAST_PRESETS[0];
-    const elapsed=Date.now()-FAST_STATE.startTs;
-    if(elapsed>=preset.fast*3600*1000){
-      celebrate("Fast Complete!","You completed your "+preset.name+" fast. Break it gently with something light.","fast_done");
-    }
-  }
-  FAST_STATE=null;saveFastState();
-  if(FAST_TICK){clearInterval(FAST_TICK);FAST_TICK=null;}
-  renderFasting();
-}
-function startFastTick(){
-  if(FAST_TICK)clearInterval(FAST_TICK);
-  if(!FAST_STATE&&!RAMADAN.on)return;
-  FAST_TICK=setInterval(()=>{
-    if(!FAST_STATE&&!RAMADAN.on){clearInterval(FAST_TICK);FAST_TICK=null;return;}
-    renderFasting();
-  },1000);
-}
-function initFasting(){
-  loadFastState();
-  loadRamadan();
-  renderFasting();
-  if(FAST_STATE&&!RAMADAN.on)startFastTick();
-  if(RAMADAN.on)startFastTick();
-}
-
-// ===== Ramadan Mode =====
-// User sets local Suhoor (pre-dawn) and Iftar (sunset) times. Structure is
-// ready for an automatic prayer-times API later, but user-set times are
-// accurate for their location today without any dependency.
-let RAMADAN={on:false,suhoor:"04:30",iftar:"18:45"};
-function ramadanKey(){return "ritual_ramadan_"+(U?U.id:"x");}
-function loadRamadan(){
-  try{const raw=localStorage.getItem(ramadanKey());if(raw)RAMADAN=Object.assign(RAMADAN,JSON.parse(raw));}catch(e){}
-}
-function saveRamadan(){try{localStorage.setItem(ramadanKey(),JSON.stringify(RAMADAN));}catch(e){}}
-function setFastMode(ram){
-  RAMADAN.on=ram;saveRamadan();
-  renderFasting();
-  if(ram)startFastTick(); // reuse the per-second tick to update the countdown
-  else if(!FAST_STATE&&FAST_TICK){clearInterval(FAST_TICK);FAST_TICK=null;}
-}
-function setRamadanTime(which,val){
-  if(which==="suhoor")RAMADAN.suhoor=val; else RAMADAN.iftar=val;
-  saveRamadan();renderFasting();
-}
-// returns ms until the next occurrence of HH:MM today/tomorrow
-function msUntil(hhmm){
-  const [h,m]=hhmm.split(":").map(Number);
-  const now=new Date();
-  const t=new Date();t.setHours(h,m,0,0);
-  if(t<=now)t.setDate(t.getDate()+1);
-  return t-now;
-}
-function renderRamadan(){
-  const now=new Date();
-  const [sh,sm]=RAMADAN.suhoor.split(":").map(Number);
-  const [ih,im]=RAMADAN.iftar.split(":").map(Number);
-  const suhoorMin=sh*60+sm, iftarMin=ih*60+im, nowMin=now.getHours()*60+now.getMinutes();
-  // fasting window is roughly Suhoor -> Iftar; eating window Iftar -> next Suhoor
-  const fasting = nowMin>=suhoorMin && nowMin<iftarMin;
-  const fmt=ms=>{const s=Math.floor(ms/1000);const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const sec=s%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");};
-  let ringTxt,sub,target,R=52,C=2*Math.PI*R,frac=0,stroke="var(--acc)";
-  if(fasting){
-    // counting down to Iftar
-    const total=(iftarMin-suhoorMin)*60*1000;
-    const done=(nowMin-suhoorMin)*60*1000 + now.getSeconds()*1000;
-    frac=Math.max(0,Math.min(1,done/total));
-    target=msUntil(RAMADAN.iftar);
-    ringTxt=fmt(target);sub="until Iftar";
-  }else{
-    // eating window, counting to next Suhoor
-    target=msUntil(RAMADAN.suhoor);
-    ringTxt=fmt(target);sub="until Suhoor";stroke="var(--gr)";frac=1;
-  }
-  return `
-    <div class="fast-active">
-      <div class="fast-ring-wrap">
-        <svg viewBox="0 0 120 120" class="fast-ring">
-          <circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--s3)" stroke-width="8"/>
-          <circle cx="60" cy="60" r="${R}" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round"
-            stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset 1s linear"/>
-        </svg>
-        <div class="fast-ring-txt">
-          <div class="fast-elapsed">${ringTxt}</div>
-          <div class="fast-sub">${sub}</div>
-        </div>
-      </div>
-      <div class="fast-info">${fasting?"Fasting now 🌙":"Eating window 🍽️"} · Suhoor ${RAMADAN.suhoor} · Iftar ${RAMADAN.iftar}</div>
-      <div class="ramadan-times">
-        <label class="ramadan-time"><span>Suhoor</span><input type="time" value="${RAMADAN.suhoor}" onchange="setRamadanTime('suhoor',this.value)"></label>
-        <label class="ramadan-time"><span>Iftar</span><input type="time" value="${RAMADAN.iftar}" onchange="setRamadanTime('iftar',this.value)"></label>
-      </div>
-      <div class="ramadan-tips">
-        ${fasting
-          ? "Tip: schedule training close to Iftar so you can refuel right after. Rest if you feel light-headed."
-          : "Tip: hydrate steadily between Iftar and Suhoor (aim for your water goal), and prioritize protein and slow carbs at Suhoor."}
-      </div>
-      <div class="fast-note">Set your local Suhoor and Iftar times above. Ramadan fasting is a personal and medical matter; if you are unwell, pregnant, or managing a condition, follow medical and religious guidance.</div>
-    </div>`;
-}
-
-
-
 async function changeWater(d){
   const next=WATER_GLASSES+d;
   if(next<0)return;
@@ -2776,7 +2371,6 @@ function renderDiet(){
   document.getElementById("dbmdesc").textContent=fullDesc;
   loadCalTracker();
   loadWaterTracker();
-  initFasting();
   loadDietPlan();
   const meals=[
     {t:"Morning",n:"Breakfast",d:"2 boiled eggs + 1 roti + chai without sugar."},
@@ -3190,49 +2784,6 @@ async function buildInsights(){
   renderInsightCoach({avgCal,calTarget,estDeficit,workoutDays,waterDaysHit,weightChange,loggedDays:loggedCalDays.length});
   renderInsightStats({estDeficit,workoutDays,avgCal,loggedDays:loggedCalDays.length});
   renderInsightChart(weights,dailyCal,calTarget,days);
-  renderReportCard({avgCal,calTarget,workoutDays,waterDaysHit,weightChange,loggedDays:loggedCalDays.length,mon});
-}
-
-// Weekly report card: a zero-effort snapshot of what the user already logged.
-function renderReportCard(d){
-  const el=document.getElementById("report-card");
-  if(!el)return;
-  // Friendly week label, e.g. "Jun 9 to Jun 15"
-  const mon=d.mon||startOfWeekMonday(new Date());
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
-  const mlbl=({0:"Jan",1:"Feb",2:"Mar",3:"Apr",4:"May",5:"Jun",6:"Jul",7:"Aug",8:"Sep",9:"Oct",10:"Nov",11:"Dec"});
-  const weekLabel=mlbl[mon.getMonth()]+" "+mon.getDate()+" to "+mlbl[sun.getMonth()]+" "+sun.getDate();
-  if(d.loggedDays===0){
-    el.innerHTML=`<div class="card-lbl">Weekly Report Card</div>
-      <div class="report-empty">Log a few days this week and your report card will appear here, summarizing your calories, water, workouts, and weight.</div>`;
-    return;
-  }
-  const wcSign=d.weightChange>0?"+":"";
-  const goal=((P&&P.plan_goal||"")+" "+(P&&P.goal||"")).toLowerCase();
-  const wantsLoss=goal.includes("fatloss")||goal.includes("lose");
-  const wantsGain=goal.includes("muscle")||goal.includes("gain");
-  let wcCls="";
-  if(d.weightChange!==null&&d.weightChange!==0){
-    if(wantsLoss)wcCls=d.weightChange<0?"good":"caution";
-    else if(wantsGain)wcCls=d.weightChange>0?"good":"caution";
-  }
-  // a short, honest encouraging line based on consistency
-  let note;
-  if(d.loggedDays>=6)note="Outstanding consistency this week. Showing up daily is the whole game.";
-  else if(d.loggedDays>=3)note="Solid week. A little more consistency and the results follow.";
-  else note="A start is a start. Try to log a few more days next week.";
-  const cell=(label,val,sub,cls)=>`<div class="report-cell"><div class="report-val ${cls||''}">${val}</div><div class="report-lbl">${label}</div>${sub?`<div class="report-sub">${sub}</div>`:""}</div>`;
-  el.innerHTML=`
-    <div class="card-lbl">Weekly Report Card</div>
-    <div class="report-week">${weekLabel}</div>
-    <div class="report-grid">
-      ${cell("Days logged",d.loggedDays+"/7","")}
-      ${cell("Avg calories",d.avgCal?d.avgCal.toLocaleString():"0","of "+d.calTarget.toLocaleString())}
-      ${cell("Workouts",d.workoutDays,"this week")}
-      ${cell("Water goal",d.waterDaysHit+"/7","days hit")}
-      ${d.weightChange!==null?cell("Weight",wcSign+d.weightChange+" kg","this week",wcCls):""}
-    </div>
-    <div class="report-note">${note}</div>`;
 }
 
 function renderInsightCoach(d){
@@ -3860,7 +3411,6 @@ function showScreen(name){
 }
 
 function showPage(name){
-  if(typeof _scanner!=="undefined"&&_scanner){try{closeScanner();}catch(e){}}
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".bni").forEach(b=>b.classList.remove("on"));
   const pg=document.getElementById("page-"+name);
@@ -3910,12 +3460,6 @@ function scrollToToday(){
   const td=getTD();if(td<1||td>40)return;
   const pi=PH.findIndex(([s,e])=>td-1>=s&&td-1<=e);if(pi>=0)showPhase(pi);
   setTimeout(()=>{const el=document.getElementById("dc"+(td-1));if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
-}
-
-function scrollToHabits(){
-  // Habits live in a card on the Home page; make sure we are on Home, then scroll to it.
-  showPage("home");
-  setTimeout(()=>{const el=document.getElementById("home-habits-card");if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
 }
 
 function jumpDay(i){
@@ -4040,7 +3584,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.06.1";
+const APP_VERSION = "2026.06.05.3";
 
 async function checkForUpdate(){
   try{
