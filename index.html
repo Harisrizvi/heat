@@ -1015,7 +1015,7 @@ body{background:var(--bg);color:var(--t1);font-family:Inter,sans-serif;font-size
           <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-water-arc" cx="22" cy="22" r="18" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
           <div class="stile-info"><div class="stile-lbl">Water</div><div class="stile-val" id="st-water">0 / 0 L</div></div>
         </div>
-        <div class="stile" onclick="showPage('habits')">
+        <div class="stile" onclick="scrollToHabits()">
           <div class="stile-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--s3)" stroke-width="4"/><circle id="st-hab-arc" cx="22" cy="22" r="18" fill="none" stroke="#3dd68c" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 22 22)"/></svg></div>
           <div class="stile-info"><div class="stile-lbl">Habits</div><div class="stile-val" id="st-hab">0 / 0</div></div>
         </div>
@@ -1534,6 +1534,57 @@ const MOT=[
 
 function getTD(){if(!SD)return 0;const s=new Date(SD),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);return Math.floor((t-s)/86400000)+1;}
 function getStreak(){const td=getTD();let s=0;for(let i=td-1;i>=0;i--){if(PROG[i]&&PROG[i].completed)s++;else break;}return s;}
+
+// ===== Streak Shields =====
+// A shield protects a streak from a single missed day. The user earns one
+// shield for every 7 completed days (max 3 held). When counting the streak,
+// a single-day gap is bridged if a shield is available, so one slip does not
+// reset everything. This is stored per-user in localStorage.
+function shieldKey(){return "ritual_shields_"+(U?U.id:"x");}
+function getShieldData(){
+  try{const raw=localStorage.getItem(shieldKey());return raw?JSON.parse(raw):{shields:0,usedDays:[]};}catch(e){return {shields:0,usedDays:[]};}
+}
+function saveShieldData(d){try{localStorage.setItem(shieldKey(),JSON.stringify(d));}catch(e){}}
+// streak that tolerates single-day gaps when shields are available
+function getStreakShielded(){
+  const td=getTD();
+  const data=getShieldData();
+  let earned=Math.floor(getDone()/7);          // 1 shield per 7 completed days
+  let available=Math.min(3,Math.max(0,earned-(data.usedDays?data.usedDays.length:0)));
+  let streak=0;
+  for(let i=td-1;i>=0;i--){
+    if(PROG[i]&&PROG[i].completed){streak++;continue;}
+    // a gap: try to bridge with a shield (only single-day gaps)
+    if(available>0&&i>0&&PROG[i-1]&&PROG[i-1].completed){
+      available--;streak++; // shield keeps the streak alive across this day
+      continue;
+    }
+    break;
+  }
+  return streak;
+}
+function shieldsAvailable(){
+  const data=getShieldData();
+  const earned=Math.floor(getDone()/7);
+  return Math.min(3,Math.max(0,earned-(data.usedDays?data.usedDays.length:0)));
+}
+
+// ===== Milestone celebrations =====
+const STREAK_MILESTONES=[3,7,14,30,50,100];
+function checkStreakMilestone(streak){
+  if(!STREAK_MILESTONES.includes(streak))return;
+  const key="streak_"+streak;
+  const labels={3:"3-Day Streak!",7:"One Week Strong!",14:"Two Weeks!",30:"30-Day Streak!",50:"50 Days!",100:"100 Days!"};
+  const msgs={
+    3:"Three days in a row. The habit is forming.",
+    7:"A full week of showing up. This is how change happens.",
+    14:"Two weeks straight. You are building real momentum.",
+    30:"Thirty days. This is no longer a phase, it is who you are becoming.",
+    50:"Fifty days of consistency. Remarkable discipline.",
+    100:"One hundred days. You are in rare company now."
+  };
+  celebrate(labels[streak]||"Streak Milestone!",msgs[streak]||"Incredible consistency.","milestone_"+key);
+}
 function getDone(){return Object.values(PROG).filter(p=>p&&p.completed).length;}
 function getMissed(){const td=getTD();let m=0;for(let i=0;i<Math.min(td-1,40);i++)if(!PROG[i]||!PROG[i].completed)m++;return m;}
 function getDayDate(i){if(!SD)return null;const s=new Date(SD);s.setHours(0,0,0,0);s.setDate(s.getDate()+i);return s;}
@@ -1652,7 +1703,7 @@ async function loadHabs(){
 function renderHome(){
   const td=getTD();
   renderToday(td);renderStats(td);renderCal(td);renderMot(td);renderCards(td);
-  document.getElementById("nstreak").textContent=getStreak()+" day streak";
+  document.getElementById("nstreak").textContent=getStreakShielded()+" day streak";
   renderStanding();
   updatePlanCta();
   const hl=document.getElementById("thero-label");
@@ -1708,9 +1759,12 @@ function setArc(id,frac){
 async function renderStanding(){
   if(!P||!U)return;
   // Streak + habits are already in memory
-  const streak=getStreak();
+  const streak=getStreakShielded();
   document.getElementById("st-streak-n").textContent=streak;
-  document.getElementById("st-streak").textContent=streak+(streak===1?" day":" days");
+  const shields=shieldsAvailable();
+  const shieldTxt=shields>0?(" · "+shields+" 🛡️"):"";
+  document.getElementById("st-streak").textContent=streak+(streak===1?" day":" days")+shieldTxt;
+  checkStreakMilestone(streak);
   const totalHab=HABITS.length;
   const doneHab=HABITS.filter(h=>HLOGS[h.id]&&HLOGS[h.id].completed).length;
   document.getElementById("st-hab").textContent=doneHab+" / "+(totalHab||0);
@@ -3858,6 +3912,12 @@ function scrollToToday(){
   setTimeout(()=>{const el=document.getElementById("dc"+(td-1));if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
 }
 
+function scrollToHabits(){
+  // Habits live in a card on the Home page; make sure we are on Home, then scroll to it.
+  showPage("home");
+  setTimeout(()=>{const el=document.getElementById("home-habits-card");if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
+}
+
 function jumpDay(i){
   const pi=PH.findIndex(([s,e])=>i>=s&&i<=e);if(pi>=0)showPhase(pi);
   setTimeout(()=>{const el=document.getElementById("dc"+i);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});},150);
@@ -3980,7 +4040,7 @@ function initCanvas(){drawBG();}
 
 // ===== Auto-update: force newest build onto all users =====
 // Bump APP_VERSION on every deploy. Must match the "version" field in version.json.
-const APP_VERSION = "2026.06.05.8";
+const APP_VERSION = "2026.06.06.1";
 
 async function checkForUpdate(){
   try{
